@@ -1,5 +1,5 @@
 // Dar Henani PMS — data model
-// SQLite for zero-config persistence. Reservations are the single source of
+// Postgres (Supabase) for persistence. Reservations are the single source of
 // truth for both stays and events (reservation.type discriminates).
 
 generator client {
@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
