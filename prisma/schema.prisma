@@ -1,0 +1,255 @@
+// Dar Henani PMS — data model
+// SQLite for zero-config persistence. Reservations are the single source of
+// truth for both stays and events (reservation.type discriminates).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum ReservationType {
+  STAY
+  EVENT
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  PENDING
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
+enum BookingSource {
+  BOOKING_COM
+  AIRBNB
+  PHONE
+  WHATSAPP
+  DIRECT
+  WALK_IN
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  OTHER
+}
+
+enum EventType {
+  WEDDING
+  HENNA
+  BIRTHDAY
+  ENGAGEMENT
+  CORPORATE
+  PRIVATE_EVENT
+  DINNER
+  PHOTOSHOOT
+  OTHER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      UserRole @default(STAFF)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservationsCreated Reservation[] @relation("ReservationCreatedBy")
+  payments            Payment[]     @relation("PaymentRecordedBy")
+  expenses            Expense[]     @relation("ExpenseRecordedBy")
+}
+
+model Guest {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  phone     String?
+  email     String?
+  idNumber  String? // CIN / Passport
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+
+  @@index([phone])
+  @@index([lastName, firstName])
+}
+
+model RoomType {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+
+  rooms Room[]
+}
+
+model Amenity {
+  id   String @id @default(cuid())
+  name String @unique
+
+  rooms RoomAmenity[]
+}
+
+model Room {
+  id            String     @id @default(cuid())
+  name          String // room name/number
+  roomTypeId    String?
+  roomType      RoomType?  @relation(fields: [roomTypeId], references: [id])
+  capacity      Int        @default(2)
+  pricePerNight Float
+  status        RoomStatus @default(AVAILABLE)
+  description   String?
+  photos        String? // JSON-encoded array of URLs
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  amenities    RoomAmenity[]
+  reservations Reservation[]
+
+  @@index([status])
+}
+
+model RoomAmenity {
+  roomId    String
+  amenityId String
+  room      Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  amenity   Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, amenityId])
+}
+
+model EventSpace {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  capacity    Int?
+  description String?
+
+  reservations Reservation[]
+}
+
+model Reservation {
+  id     String            @id @default(cuid())
+  code   String            @unique // human-friendly reservation ID e.g. DH-2026-0001
+  type   ReservationType
+  status ReservationStatus @default(PENDING)
+
+  guestId String
+  guest   Guest  @relation(fields: [guestId], references: [id])
+
+  // Stay fields
+  roomId   String?
+  room     Room?     @relation(fields: [roomId], references: [id])
+  checkIn  DateTime?
+  checkOut DateTime?
+  adults   Int?      @default(1)
+  children Int?      @default(0)
+
+  // Event fields
+  eventType    EventType?
+  eventName    String?
+  eventDate    DateTime?
+  eventStart   String? // "HH:mm"
+  eventEnd     String? // "HH:mm"
+  guestCount   Int?
+  eventSpaceId String?
+  eventSpace   EventSpace? @relation(fields: [eventSpaceId], references: [id])
+  services     String? // JSON-encoded array of selected optional services
+
+  source BookingSource @default(DIRECT)
+
+  // Pricing
+  basePrice     Float @default(0)
+  extraCharges  Float @default(0)
+  discount      Float @default(0)
+  totalAmount   Float @default(0)
+
+  notes String?
+
+  createdById String?
+  createdBy   User?    @relation("ReservationCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([type])
+  @@index([status])
+  @@index([checkIn, checkOut])
+  @@index([eventDate])
+  @@index([guestId])
+  @@index([roomId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  reservationId String
+  reservation   Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  amount        Float
+  method        PaymentMethod @default(CASH)
+  note          String?
+  recordedById  String?
+  recordedBy    User?         @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([reservationId])
+  @@index([createdAt])
+}
+
+model Expense {
+  id           String   @id @default(cuid())
+  category     String
+  description  String?
+  amount       Float
+  date         DateTime @default(now())
+  recordedById String?
+  recordedBy   User?    @relation("ExpenseRecordedBy", fields: [recordedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([date])
+}
+
+model PropertySettings {
+  id             String   @id @default("default")
+  propertyName   String   @default("Dar Henani")
+  address        String?
+  phone          String?
+  email          String?
+  currency       String   @default("MAD")
+  checkInTime    String   @default("14:00")
+  checkOutTime   String   @default("12:00")
+  cancellationPolicy String?
+  defaultDepositPercent Float @default(30)
+  emailNotifications Boolean @default(true)
+  lowOccupancyAlerts Boolean @default(false)
+  updatedAt      DateTime @updatedAt
+}

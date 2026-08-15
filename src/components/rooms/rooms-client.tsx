@@ -1,0 +1,133 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { Users, Pencil, Plus, BedDouble } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { formatCurrency } from "@/lib/utils";
+import { roomStatusLabel, roomStatusVariant } from "@/lib/status";
+import { updateRoomStatus } from "@/app/(app)/rooms/actions";
+import { RoomFormDialog, type RoomFormValue } from "@/components/rooms/room-form-dialog";
+import type { RoomStatus } from "@prisma/client";
+import type { listRoomsWithOccupancy } from "@/lib/rooms";
+
+type RoomCard = Awaited<ReturnType<typeof listRoomsWithOccupancy>>[number];
+
+const STATUS_OPTIONS: RoomStatus[] = ["AVAILABLE", "OCCUPIED", "CLEANING", "MAINTENANCE", "OUT_OF_SERVICE"];
+
+export function RoomsClient({
+  rooms,
+  roomTypes,
+  amenities,
+}: {
+  rooms: RoomCard[];
+  roomTypes: { id: string; name: string }[];
+  amenities: { id: string; name: string }[];
+}) {
+  const router = useRouter();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<RoomFormValue | undefined>(undefined);
+  const [, startTransition] = useTransition();
+
+  function openAdd() {
+    setEditing(undefined);
+    setFormOpen(true);
+  }
+
+  function openEdit(room: RoomCard) {
+    setEditing({
+      id: room.id,
+      name: room.name,
+      roomTypeId: room.roomType?.id ?? "",
+      capacity: room.capacity,
+      pricePerNight: room.pricePerNight,
+      description: room.description ?? "",
+      amenityIds: room.amenities.map((a) => a.amenity.id),
+    });
+    setFormOpen(true);
+  }
+
+  function changeStatus(id: string, status: RoomStatus) {
+    startTransition(async () => {
+      const result = await updateRoomStatus(id, status);
+      if (result.ok) {
+        toast.success("Room status updated");
+        router.refresh();
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex justify-end">
+        <Button onClick={openAdd}><Plus className="h-4 w-4" /> Add room</Button>
+      </div>
+
+      {rooms.length === 0 ? (
+        <EmptyState
+          icon={BedDouble}
+          title="No rooms yet"
+          description="Add your first room to start taking stay reservations."
+          action={<Button onClick={openAdd}>+ Add room</Button>}
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {rooms.map((room) => (
+            <Card key={room.id} className="flex flex-col overflow-hidden">
+              <div className="flex items-start justify-between gap-3 p-5 pb-3">
+                <div className="min-w-0">
+                  <p className="font-display text-base font-medium text-text-primary">{room.name}</p>
+                  <p className="text-xs text-text-secondary">{room.roomType?.name ?? "Room"}</p>
+                </div>
+                <Badge variant={roomStatusVariant[room.status]}>{roomStatusLabel[room.status]}</Badge>
+              </div>
+              <div className="flex-1 space-y-3 px-5 pb-3 text-sm">
+                <div className="flex items-center gap-4 text-text-secondary">
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {room.capacity} guests</span>
+                  <span className="font-medium text-primary">{formatCurrency(room.pricePerNight)}/night</span>
+                </div>
+                {room.description && <p className="line-clamp-2 text-text-secondary">{room.description}</p>}
+                {room.amenities.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {room.amenities.slice(0, 4).map(({ amenity }) => (
+                      <Badge key={amenity.id} variant="outline">{amenity.name}</Badge>
+                    ))}
+                    {room.amenities.length > 4 && <Badge variant="outline">+{room.amenities.length - 4}</Badge>}
+                  </div>
+                )}
+                {room.currentReservation && (
+                  <div className="rounded-[var(--radius-sm)] bg-info-bg px-3 py-2 text-xs text-info">
+                    <Link href={`/reservations/${room.currentReservation.id}`} className="font-medium hover:underline">
+                      {room.currentReservation.guest.firstName} {room.currentReservation.guest.lastName}
+                    </Link>{" "}
+                    until {new Date(room.currentReservation.checkOut!).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 border-t border-border p-3">
+                <Select
+                  className="h-9 flex-1 text-xs"
+                  value={room.status}
+                  onChange={(e) => changeStatus(room.id, e.target.value as RoomStatus)}
+                >
+                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{roomStatusLabel[s]}</option>)}
+                </Select>
+                <Button variant="outline" size="icon" onClick={() => openEdit(room)} aria-label="Edit room">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <RoomFormDialog open={formOpen} onOpenChange={setFormOpen} roomTypes={roomTypes} amenities={amenities} initial={editing} />
+    </div>
+  );
+}
