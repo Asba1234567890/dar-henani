@@ -3,53 +3,53 @@
 
 /* ============================================================
    Dar Henani — Design Tokens
-   A warm, boutique-riad palette: henna/terracotta primary,
-   aged-gold accent, ivory surfaces, deep ink text.
+   Brand palette: Vert Hénani (deep green), Vert Sauge (sage),
+   Beige Sable, Crème and Or Doux (gold) — from the brand identity.
    ============================================================ */
 
 :root {
   /* Brand */
-  --color-primary: #8a3b2c; /* henna terracotta */
-  --color-primary-dark: #6c2d21;
-  --color-primary-light: #b1543f;
-  --color-primary-foreground: #fdf8f2;
+  --color-primary: #10644a; /* vert hénani */
+  --color-primary-dark: #0b4a37;
+  --color-primary-light: #7fa08f; /* vert sauge */
+  --color-primary-foreground: #faf7f0;
 
-  --color-accent: #b8892f; /* aged gold */
-  --color-accent-dark: #96701f;
-  --color-accent-foreground: #2b2420;
+  --color-accent: #c8a45a; /* or doux */
+  --color-accent-dark: #a3813f;
+  --color-accent-foreground: #24352d;
 
-  --color-secondary: #4a5a4e; /* deep olive/sage */
-  --color-secondary-foreground: #fdf8f2;
+  --color-secondary: #7fa08f; /* vert sauge */
+  --color-secondary-foreground: #faf7f0;
 
   /* Surfaces */
-  --color-background: #faf6f0; /* warm ivory */
+  --color-background: #faf7f0; /* crème */
   --color-surface: #ffffff;
   --color-card: #ffffff;
-  --color-card-hover: #fbf3e8;
-  --color-border: #e7dcc9;
-  --color-border-strong: #d8c6a6;
-  --color-muted: #f1e8da;
-  --color-muted-foreground: #7a6f5f;
+  --color-card-hover: #f2e9d8; /* beige sable */
+  --color-border: #ebe1cb;
+  --color-border-strong: #dccca0;
+  --color-muted: #f2e9d8; /* beige sable */
+  --color-muted-foreground: #6f7a71;
 
   /* Text */
-  --color-text-primary: #2b2420;
-  --color-text-secondary: #6c6154;
-  --color-text-inverted: #fdf8f2;
+  --color-text-primary: #1c2b24;
+  --color-text-secondary: #5c6b62;
+  --color-text-inverted: #faf7f0;
 
   /* Status */
-  --color-success: #3f6b4a;
-  --color-success-bg: #e8f0e6;
-  --color-warning: #b8892f;
-  --color-warning-bg: #f7ecd6;
-  --color-error: #a13f34;
-  --color-error-bg: #f6e5e1;
-  --color-info: #3f5c6b;
-  --color-info-bg: #e5eef2;
+  --color-success: #10644a;
+  --color-success-bg: #e3f0ea;
+  --color-warning: #b8863a;
+  --color-warning-bg: #f6ecd8;
+  --color-error: #a5453a;
+  --color-error-bg: #f5e4e0;
+  --color-info: #4c7488;
+  --color-info-bg: #e5eef1;
 
   /* Elevation */
-  --shadow-sm: 0 1px 2px 0 rgba(43, 36, 32, 0.05);
-  --shadow-md: 0 4px 12px -2px rgba(43, 36, 32, 0.08), 0 2px 4px -2px rgba(43, 36, 32, 0.04);
-  --shadow-lg: 0 12px 32px -8px rgba(43, 36, 32, 0.14), 0 4px 8px -4px rgba(43, 36, 32, 0.06);
+  --shadow-sm: 0 1px 2px 0 rgba(28, 43, 36, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(28, 43, 36, 0.08), 0 2px 4px -2px rgba(28, 43, 36, 0.04);
+  --shadow-lg: 0 12px 32px -8px rgba(28, 43, 36, 0.14), 0 4px 8px -4px rgba(28, 43, 36, 0.06);
 
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;
@@ -92,7 +92,7 @@
   --color-info-bg: var(--color-info-bg);
 
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-fraunces);
+  --font-serif: var(--font-playfair);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);

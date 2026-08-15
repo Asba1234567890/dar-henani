@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Users, Pencil, Plus, BedDouble } from "lucide-react";
+import { Users, Pencil, Plus, BedDouble, Images } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +14,21 @@ import { formatCurrency } from "@/lib/utils";
 import { roomStatusLabel, roomStatusVariant } from "@/lib/status";
 import { updateRoomStatus } from "@/app/(app)/rooms/actions";
 import { RoomFormDialog, type RoomFormValue } from "@/components/rooms/room-form-dialog";
+import { RoomGalleryDialog } from "@/components/rooms/room-gallery-dialog";
 import type { RoomStatus } from "@prisma/client";
 import type { listRoomsWithOccupancy } from "@/lib/rooms";
 
 type RoomCard = Awaited<ReturnType<typeof listRoomsWithOccupancy>>[number];
+
+function parsePhotos(photos: string | null): string[] {
+  if (!photos) return [];
+  try {
+    const parsed = JSON.parse(photos);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 const STATUS_OPTIONS: RoomStatus[] = ["AVAILABLE", "OCCUPIED", "CLEANING", "MAINTENANCE", "OUT_OF_SERVICE"];
 
@@ -33,6 +44,7 @@ export function RoomsClient({
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<RoomFormValue | undefined>(undefined);
+  const [galleryRoom, setGalleryRoom] = useState<RoomCard | null>(null);
   const [, startTransition] = useTransition();
 
   function openAdd() {
@@ -49,6 +61,7 @@ export function RoomsClient({
       pricePerNight: room.pricePerNight,
       description: room.description ?? "",
       amenityIds: room.amenities.map((a) => a.amenity.id),
+      photos: parsePhotos(room.photos),
     });
     setFormOpen(true);
   }
@@ -78,8 +91,28 @@ export function RoomsClient({
         />
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
+          {rooms.map((room) => {
+            const photos = parsePhotos(room.photos);
+            return (
             <Card key={room.id} className="flex flex-col overflow-hidden">
+              {photos.length > 0 && (
+                <button
+                  onClick={() => setGalleryRoom(room)}
+                  className="group relative aspect-video w-full overflow-hidden bg-muted"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photos[0]}
+                    alt={room.name}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {photos.length > 1 && (
+                    <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[11px] font-medium text-white">
+                      <Images className="h-3 w-3" /> {photos.length}
+                    </span>
+                  )}
+                </button>
+              )}
               <div className="flex items-start justify-between gap-3 p-5 pb-3">
                 <div className="min-w-0">
                   <p className="font-display text-base font-medium text-text-primary">{room.name}</p>
@@ -123,11 +156,20 @@ export function RoomsClient({
                 </Button>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
       <RoomFormDialog open={formOpen} onOpenChange={setFormOpen} roomTypes={roomTypes} amenities={amenities} initial={editing} />
+      {galleryRoom && (
+        <RoomGalleryDialog
+          open={!!galleryRoom}
+          onOpenChange={(v) => !v && setGalleryRoom(null)}
+          photos={parsePhotos(galleryRoom.photos)}
+          roomName={galleryRoom.name}
+        />
+      )}
     </div>
   );
 }

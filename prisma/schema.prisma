@@ -244,7 +244,7 @@ model PropertySettings {
   address        String?
   phone          String?
   email          String?
-  currency       String   @default("MAD")
+  currency       String   @default("TND")
   checkInTime    String   @default("14:00")
   checkOutTime   String   @default("12:00")
   cancellationPolicy String?

@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "MAD") {
+export function formatCurrency(amount: number, currency = "TND") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
@@ -14,7 +14,7 @@ export function formatCurrency(amount: number, currency = "MAD") {
     maximumFractionDigits: 2,
   })
     .format(amount)
-    .replace("MAD", "MAD ")
+    .replace(currency, `${currency} `)
     .trim();
 }
 

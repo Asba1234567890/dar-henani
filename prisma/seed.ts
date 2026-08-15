@@ -33,17 +33,17 @@ async function main() {
 
   const suiteType = await prisma.roomType.create({ data: { name: "Suite", description: "Spacious suite with courtyard access." } });
   const doubleType = await prisma.roomType.create({ data: { name: "Double Room", description: "Classic double room." } });
-  const riadType = await prisma.roomType.create({ data: { name: "Riad Room", description: "Traditional Moroccan-style room." } });
+  const riadType = await prisma.roomType.create({ data: { name: "Riad Room", description: "Traditional Tunisian-style room." } });
 
   const roomsData = [
-    { name: "Jasmine Suite", roomTypeId: suiteType.id, capacity: 3, pricePerNight: 1400, status: "AVAILABLE" as const, description: "Our signature suite overlooking the inner courtyard, with a private terrace.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Terrace", "Rooftop view"] },
-    { name: "Amber Suite", roomTypeId: suiteType.id, capacity: 3, pricePerNight: 1350, status: "OCCUPIED" as const, description: "Warm-toned suite with a fireplace and reading nook.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Fireplace"] },
-    { name: "Orange Blossom Room", roomTypeId: doubleType.id, capacity: 2, pricePerNight: 850, status: "AVAILABLE" as const, description: "Bright double room with garden views.", amenities: ["WiFi", "Air conditioning", "Private bathroom"] },
-    { name: "Rose Room", roomTypeId: doubleType.id, capacity: 2, pricePerNight: 850, status: "CLEANING" as const, description: "Cozy double room near the courtyard.", amenities: ["WiFi", "Private bathroom"] },
-    { name: "Cedar Riad Room", roomTypeId: riadType.id, capacity: 2, pricePerNight: 700, status: "AVAILABLE" as const, description: "Traditional room with hand-carved cedar details.", amenities: ["WiFi", "Private bathroom"] },
-    { name: "Saffron Riad Room", roomTypeId: riadType.id, capacity: 2, pricePerNight: 700, status: "MAINTENANCE" as const, description: "Traditional room, currently under refurbishment.", amenities: ["WiFi"] },
-    { name: "Mint Room", roomTypeId: doubleType.id, capacity: 2, pricePerNight: 800, status: "AVAILABLE" as const, description: "Fresh, minimalist double room.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Minibar"] },
-    { name: "Terrace Loft", roomTypeId: suiteType.id, capacity: 4, pricePerNight: 1600, status: "AVAILABLE" as const, description: "Top-floor loft with a private rooftop terrace, ideal for families.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Terrace", "Rooftop view", "Minibar"] },
+    { name: "Jasmine Suite", roomTypeId: suiteType.id, capacity: 3, pricePerNight: 240, status: "AVAILABLE" as const, description: "Our signature suite overlooking the inner courtyard, with a private terrace.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Terrace", "Rooftop view"] },
+    { name: "Amber Suite", roomTypeId: suiteType.id, capacity: 3, pricePerNight: 230, status: "OCCUPIED" as const, description: "Warm-toned suite with a fireplace and reading nook.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Fireplace"] },
+    { name: "Orange Blossom Room", roomTypeId: doubleType.id, capacity: 2, pricePerNight: 145, status: "AVAILABLE" as const, description: "Bright double room with garden views.", amenities: ["WiFi", "Air conditioning", "Private bathroom"] },
+    { name: "Rose Room", roomTypeId: doubleType.id, capacity: 2, pricePerNight: 145, status: "CLEANING" as const, description: "Cozy double room near the courtyard.", amenities: ["WiFi", "Private bathroom"] },
+    { name: "Cedar Riad Room", roomTypeId: riadType.id, capacity: 2, pricePerNight: 120, status: "AVAILABLE" as const, description: "Traditional room with hand-carved cedar details.", amenities: ["WiFi", "Private bathroom"] },
+    { name: "Saffron Riad Room", roomTypeId: riadType.id, capacity: 2, pricePerNight: 120, status: "MAINTENANCE" as const, description: "Traditional room, currently under refurbishment.", amenities: ["WiFi"] },
+    { name: "Mint Room", roomTypeId: doubleType.id, capacity: 2, pricePerNight: 135, status: "AVAILABLE" as const, description: "Fresh, minimalist double room.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Minibar"] },
+    { name: "Terrace Loft", roomTypeId: suiteType.id, capacity: 4, pricePerNight: 270, status: "AVAILABLE" as const, description: "Top-floor loft with a private rooftop terrace, ideal for families.", amenities: ["WiFi", "Air conditioning", "Private bathroom", "Terrace", "Rooftop view", "Minibar"] },
   ];
 
   const rooms = [];
@@ -71,7 +71,7 @@ async function main() {
         data: {
           firstName,
           lastName,
-          phone: `+212 6${(10000000 + i * 137).toString().slice(0, 8)}`,
+          phone: `+216 ${(20000000 + i * 137).toString().slice(0, 8)}`,
           email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
           idNumber: `ID${1000 + i}`,
         },
@@ -147,7 +147,7 @@ async function main() {
   await createEvent({
     guest: guests[9], eventSpace: courtyard, eventType: "HENNA", eventName: "Sophia's Henna Night",
     eventDate: today, eventStart: "18:00", eventEnd: "23:00", guestCount: 80, status: "CONFIRMED",
-    source: "DIRECT", basePrice: 18000, extraCharges: 3000, discount: 1000, paidRatio: 0.4,
+    source: "DIRECT", basePrice: 6000, extraCharges: 900, discount: 300, paidRatio: 0.4,
     services: ["Catering", "Decoration", "Music"],
   });
 
@@ -155,19 +155,19 @@ async function main() {
   await createEvent({
     guest: guests[10], eventSpace: rooftop, eventType: "BIRTHDAY", eventName: "Elena's 30th Birthday",
     eventDate: addDays(today, 6), eventStart: "19:00", eventEnd: "23:30", guestCount: 40, status: "CONFIRMED",
-    source: "WHATSAPP", basePrice: 9000, extraCharges: 1200, discount: 0, paidRatio: 0.3,
+    source: "WHATSAPP", basePrice: 3000, extraCharges: 400, discount: 0, paidRatio: 0.3,
     services: ["Catering", "Music", "Photography"],
   });
   await createEvent({
     guest: guests[11], eventSpace: courtyard, eventType: "WEDDING", eventName: "Dubois Wedding Reception",
     eventDate: addDays(today, 25), eventStart: "17:00", eventEnd: "01:00", guestCount: 150, status: "PENDING",
-    source: "PHONE", basePrice: 45000, extraCharges: 8000, discount: 2000, paidRatio: 0.2,
+    source: "PHONE", basePrice: 15000, extraCharges: 2500, discount: 700, paidRatio: 0.2,
     services: ["Catering", "Decoration", "Music", "Photography"],
   });
   await createEvent({
-    guest: guests[8], eventSpace: lounge, eventType: "CORPORATE", eventName: "Riad Import Co. Dinner",
+    guest: guests[8], eventSpace: lounge, eventType: "CORPORATE", eventName: "Dar Henani Import Co. Dinner",
     eventDate: subDays(today, 15), eventStart: "20:00", eventEnd: "23:00", guestCount: 25, status: "CHECKED_OUT",
-    source: "OTHER", basePrice: 6000, extraCharges: 0, discount: 0, paidRatio: 1,
+    source: "OTHER", basePrice: 2000, extraCharges: 0, discount: 0, paidRatio: 1,
     services: ["Catering"],
   });
 
@@ -185,10 +185,10 @@ async function main() {
 
   await prisma.expense.createMany({
     data: [
-      { category: "Utilities", description: "Electricity & water", amount: 3200, date: subDays(today, 2), recordedById: admin.id },
-      { category: "Supplies", description: "Linens and toiletries", amount: 1500, date: subDays(today, 5), recordedById: staff.id },
-      { category: "Maintenance", description: "Plumbing repair - Saffron Room", amount: 900, date: subDays(today, 1), recordedById: admin.id },
-      { category: "Staff", description: "Event staff overtime", amount: 2200, date: subDays(today, 10), recordedById: admin.id },
+      { category: "Utilities", description: "Electricity & water", amount: 1050, date: subDays(today, 2), recordedById: admin.id },
+      { category: "Supplies", description: "Linens and toiletries", amount: 480, date: subDays(today, 5), recordedById: staff.id },
+      { category: "Maintenance", description: "Plumbing repair - Saffron Room", amount: 300, date: subDays(today, 1), recordedById: admin.id },
+      { category: "Staff", description: "Event staff overtime", amount: 720, date: subDays(today, 10), recordedById: admin.id },
     ],
   });
 
@@ -196,10 +196,10 @@ async function main() {
     data: {
       id: "default",
       propertyName: "Dar Henani",
-      address: "12 Derb Chérifa, Marrakech Medina, Morocco",
-      phone: "+212 5 24 00 00 00",
+      address: "12 Rue de la Médina, Tunis, Tunisia",
+      phone: "+216 71 000 000",
       email: "reservations@darhenani.example",
-      currency: "MAD",
+      currency: "TND",
       checkInTime: "14:00",
       checkOutTime: "12:00",
       cancellationPolicy: "Free cancellation up to 48 hours before check-in. Deposits are non-refundable within 48 hours.",

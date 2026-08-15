@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImagePlus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Select, Label, FieldGroup } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { fileToResizedDataUrl } from "@/lib/image";
 import { createRoom, updateRoom } from "@/app/(app)/rooms/actions";
 
 type RoomType = { id: string; name: string };
@@ -21,9 +22,11 @@ export type RoomFormValue = {
   pricePerNight: number;
   description: string;
   amenityIds: string[];
+  photos: string[];
 };
 
-const empty: RoomFormValue = { name: "", roomTypeId: "", capacity: 2, pricePerNight: 0, description: "", amenityIds: [] };
+const empty: RoomFormValue = { name: "", roomTypeId: "", capacity: 2, pricePerNight: 0, description: "", amenityIds: [], photos: [] };
+const MAX_PHOTOS = 6;
 
 export function RoomFormDialog({
   open,
@@ -42,6 +45,8 @@ export function RoomFormDialog({
   const [pending, startTransition] = useTransition();
   const [value, setValue] = useState<RoomFormValue>(initial ?? empty);
   const [prevOpen, setPrevOpen] = useState(open);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (open !== prevOpen) {
     setPrevOpen(open);
@@ -50,6 +55,30 @@ export function RoomFormDialog({
 
   function toggleAmenity(id: string) {
     setValue((v) => ({ ...v, amenityIds: v.amenityIds.includes(id) ? v.amenityIds.filter((x) => x !== id) : [...v.amenityIds, id] }));
+  }
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const remaining = MAX_PHOTOS - value.photos.length;
+    if (remaining <= 0) {
+      toast.error(`You can add up to ${MAX_PHOTOS} photos per room.`);
+      return;
+    }
+    setUploading(true);
+    try {
+      const selected = Array.from(files).slice(0, remaining);
+      const dataUrls = await Promise.all(selected.map((f) => fileToResizedDataUrl(f)));
+      setValue((v) => ({ ...v, photos: [...v.photos, ...dataUrls] }));
+    } catch {
+      toast.error("Could not read one of the selected images.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function removePhoto(index: number) {
+    setValue((v) => ({ ...v, photos: v.photos.filter((_, i) => i !== index) }));
   }
 
   function handleSubmit() {
@@ -61,6 +90,7 @@ export function RoomFormDialog({
         pricePerNight: value.pricePerNight,
         description: value.description || undefined,
         amenityIds: value.amenityIds,
+        photos: value.photos,
       };
       const result = value.id ? await updateRoom(value.id, payload) : await createRoom(payload);
       if (!result.ok) {
@@ -122,6 +152,46 @@ export function RoomFormDialog({
                 </button>
               ))}
             </div>
+          </div>
+          <div>
+            <Label>Photos</Label>
+            <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+              {value.photos.map((src, i) => (
+                <div key={i} className="group relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border border-border">
+                  {/* data-URL thumbnails from client-side resize, not remote images */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Room photo ${i + 1}`} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-label="Remove photo"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {value.photos.length < MAX_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex aspect-square flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border border-dashed border-border-strong text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                  <span className="text-[10px]">Add photo</span>
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">Up to {MAX_PHOTOS} photos, resized automatically.</p>
           </div>
         </div>
         <DialogFooter>

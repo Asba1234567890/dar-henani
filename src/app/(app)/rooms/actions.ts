@@ -11,6 +11,7 @@ const roomSchema = z.object({
   pricePerNight: z.number().min(0),
   description: z.string().optional(),
   amenityIds: z.array(z.string()).default([]),
+  photos: z.array(z.string()).default([]),
 });
 
 export async function createRoom(raw: z.infer<typeof roomSchema>) {
@@ -22,6 +23,7 @@ export async function createRoom(raw: z.infer<typeof roomSchema>) {
       capacity: input.capacity,
       pricePerNight: input.pricePerNight,
       description: input.description || undefined,
+      photos: input.photos.length > 0 ? JSON.stringify(input.photos) : undefined,
       amenities: { create: input.amenityIds.map((amenityId) => ({ amenityId })) },
     },
   });
@@ -40,6 +42,7 @@ export async function updateRoom(id: string, raw: z.infer<typeof roomSchema>) {
       capacity: input.capacity,
       pricePerNight: input.pricePerNight,
       description: input.description || undefined,
+      photos: input.photos.length > 0 ? JSON.stringify(input.photos) : null,
       amenities: { create: input.amenityIds.map((amenityId) => ({ amenityId })) },
     },
   });
