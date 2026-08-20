@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { utcDayRange } from "@/lib/reservations";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -8,9 +9,13 @@ export async function GET(req: NextRequest) {
   const end = searchParams.get("end");
   if (!date) return NextResponse.json({ error: "date is required" }, { status: 400 });
 
+  const eventDate = new Date(date);
+  if (Number.isNaN(eventDate.getTime())) {
+    return NextResponse.json({ error: "Invalid date." }, { status: 400 });
+  }
+
   const spaces = await prisma.eventSpace.findMany({ orderBy: { name: "asc" } });
-  const dayStart = new Date(new Date(date).toDateString());
-  const dayEnd = new Date(new Date(dayStart).setDate(dayStart.getDate() + 1));
+  const { start: dayStart, end: dayEnd } = utcDayRange(eventDate);
 
   const bookings = await prisma.reservation.findMany({
     where: {

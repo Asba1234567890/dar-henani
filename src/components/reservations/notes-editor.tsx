@@ -14,7 +14,11 @@ export function NotesEditor({ reservationId, initialNotes }: { reservationId: st
 
   function save() {
     startTransition(async () => {
-      await updateReservationNotes(reservationId, notes);
+      const result = await updateReservationNotes(reservationId, notes);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       toast.success("Notes saved");
     });
   }

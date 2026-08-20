@@ -169,6 +169,11 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
   }
 
   function handleSubmit() {
+    if (pending) return;
+    if (depositAmount > total) {
+      toast.error("Deposit cannot exceed the total amount.");
+      return;
+    }
     startTransition(async () => {
       const guest = { firstName, lastName, phone, email, idNumber };
       const payload: CreateReservationInput =
@@ -209,15 +214,19 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
               services,
             };
 
-      const result = await createReservation(payload);
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
+      try {
+        const result = await createReservation(payload);
+        if (!result.ok) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success(`Reservation ${result.code} created`);
+        onOpenChange(false);
+        router.push(`/reservations/${result.id}`);
+        router.refresh();
+      } catch {
+        toast.error("Something went wrong while creating the reservation. Please try again.");
       }
-      toast.success(`Reservation ${result.code} created`);
-      onOpenChange(false);
-      router.push(`/reservations/${result.id}`);
-      router.refresh();
     });
   }
 
