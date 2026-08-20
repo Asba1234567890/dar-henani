@@ -14,7 +14,11 @@ export function ReservationSettingsForm({ initial }: { initial: { cancellationPo
 
   function save() {
     startTransition(async () => {
-      await updateReservationSettings(value);
+      const result = await updateReservationSettings(value);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       toast.success("Reservation settings saved");
     });
   }

@@ -14,7 +14,11 @@ export function PropertyForm({ initial }: { initial: { propertyName: string; add
 
   function save() {
     startTransition(async () => {
-      await updateProperty(value);
+      const result = await updateProperty(value);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       toast.success("Property settings saved");
     });
   }

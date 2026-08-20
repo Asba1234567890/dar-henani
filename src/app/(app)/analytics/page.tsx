@@ -10,6 +10,7 @@ import { bookingSourceLabel } from "@/lib/status";
 import { RevenueChart } from "@/components/analytics/revenue-chart";
 import { RangeFilter } from "@/components/analytics/range-filter";
 import { BreakdownBar } from "@/components/finance/finance-client";
+import { requireAdminPage } from "@/lib/auth/guards";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function AnalyticsPage({
 }: {
   searchParams: Promise<{ range?: string; from?: string; to?: string }>;
 }) {
+  await requireAdminPage();
   const sp = await searchParams;
   const range = (sp.range as AnalyticsRange) || "month";
   const data = await getAnalyticsData(range, sp.from, sp.to);

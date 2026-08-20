@@ -23,7 +23,11 @@ export function AddExpenseDialog({ open, onOpenChange }: { open: boolean; onOpen
 
   function handleSubmit() {
     startTransition(async () => {
-      await addExpense({ category, description, amount, date });
+      const result = await addExpense({ category, description, amount, date });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       toast.success("Expense recorded");
       onOpenChange(false);
       setCategory("");

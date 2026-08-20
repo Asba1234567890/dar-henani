@@ -94,7 +94,7 @@ export function RoomFormDialog({
       };
       const result = value.id ? await updateRoom(value.id, payload) : await createRoom(payload);
       if (!result.ok) {
-        toast.error("Something went wrong.");
+        toast.error(result.error);
         return;
       }
       toast.success(value.id ? "Room updated" : "Room added");

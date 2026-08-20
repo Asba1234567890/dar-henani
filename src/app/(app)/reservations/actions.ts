@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateReservationCode, isRoomAvailable, isEventSpaceAvailable } from "@/lib/reservations";
+import { authorize } from "@/lib/auth/guards";
+import { logAudit } from "@/lib/audit";
 
 const guestSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -120,6 +122,9 @@ async function createReservationWithRetry(
 }
 
 export async function createReservation(raw: CreateReservationInput) {
+  const auth = await authorize();
+  if (!auth.ok) return auth;
+
   let input: CreateReservationInput;
   try {
     input = createReservationSchema.parse(raw);
@@ -155,6 +160,7 @@ export async function createReservation(raw: CreateReservationInput) {
           status: "CONFIRMED",
           guest: { connect: { id: guest.id } },
           room: { connect: { id: input.roomId } },
+          createdBy: { connect: { id: auth.user.id } },
           checkIn,
           checkOut,
           adults: input.adults,
@@ -170,6 +176,7 @@ export async function createReservation(raw: CreateReservationInput) {
         input.paymentMethod
       );
 
+      await logAudit(auth.user.id, "RESERVATION_CREATED", { targetType: "Reservation", targetId: reservation.id, metadata: { code: reservation.code, type: "STAY" } });
       revalidatePath("/reservations");
       revalidatePath("/dashboard");
       revalidatePath("/rooms");
@@ -195,6 +202,7 @@ export async function createReservation(raw: CreateReservationInput) {
         status: "CONFIRMED",
         guest: { connect: { id: guest.id } },
         eventSpace: { connect: { id: input.eventSpaceId } },
+        createdBy: { connect: { id: auth.user.id } },
         eventType: input.eventType,
         eventName: input.eventName || undefined,
         eventDate,
@@ -213,6 +221,7 @@ export async function createReservation(raw: CreateReservationInput) {
       input.paymentMethod
     );
 
+    await logAudit(auth.user.id, "RESERVATION_CREATED", { targetType: "Reservation", targetId: reservation.id, metadata: { code: reservation.code, type: "EVENT" } });
     revalidatePath("/reservations");
     revalidatePath("/dashboard");
     return { ok: true as const, id: reservation.id, code: reservation.code };
@@ -228,12 +237,17 @@ export async function addPayment(
   method: "CASH" | "CARD" | "BANK_TRANSFER" | "OTHER",
   note?: string
 ) {
+  const auth = await authorize();
+  if (!auth.ok) return auth;
   if (amount <= 0) return { ok: false as const, error: "Amount must be greater than zero." };
   try {
     const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
     if (!reservation) return { ok: false as const, error: "Reservation not found." };
 
-    await prisma.payment.create({ data: { reservationId, amount, method, note: note || undefined } });
+    await prisma.payment.create({
+      data: { reservationId, amount, method, note: note || undefined, recordedById: auth.user.id },
+    });
+    await logAudit(auth.user.id, "PAYMENT_ADDED", { targetType: "Reservation", targetId: reservationId, metadata: { amount, method } });
     revalidatePath(`/reservations/${reservationId}`);
     revalidatePath("/reservations");
     revalidatePath("/dashboard");
@@ -249,6 +263,8 @@ export async function updateReservationStatus(
   reservationId: string,
   status: "CONFIRMED" | "PENDING" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED" | "NO_SHOW"
 ) {
+  const auth = await authorize();
+  if (!auth.ok) return auth;
   try {
     const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
     if (!reservation) return { ok: false as const, error: "Reservation not found." };
@@ -265,6 +281,7 @@ export async function updateReservationStatus(
     }
 
     await prisma.reservation.update({ where: { id: reservationId }, data });
+    await logAudit(auth.user.id, "RESERVATION_STATUS_CHANGED", { targetType: "Reservation", targetId: reservationId, metadata: { status } });
     revalidatePath(`/reservations/${reservationId}`);
     revalidatePath("/reservations");
     revalidatePath("/dashboard");
@@ -277,6 +294,8 @@ export async function updateReservationStatus(
 }
 
 export async function updateReservationNotes(reservationId: string, notes: string) {
+  const auth = await authorize();
+  if (!auth.ok) return auth;
   try {
     const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
     if (!reservation) return { ok: false as const, error: "Reservation not found." };

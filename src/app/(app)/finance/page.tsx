@@ -10,6 +10,7 @@ import { getFinanceData } from "@/lib/finance";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { paymentMethodLabel } from "@/lib/status";
 import { FinanceActions, BreakdownBar } from "@/components/finance/finance-client";
+import { requireAdminPage } from "@/lib/auth/guards";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ const METHOD_COLORS: Record<string, string> = {
 };
 
 export default async function FinancePage() {
+  await requireAdminPage();
   const data = await getFinanceData();
   const { kpis } = data;
   const revenueTotal = data.revenueByType.STAY + data.revenueByType.EVENT;

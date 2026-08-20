@@ -14,7 +14,12 @@ export function SystemSettingsForm({ initial }: { initial: { emailNotifications:
     const next = { ...value, ...patch };
     setValue(next);
     startTransition(async () => {
-      await updateSystemSettings(next);
+      const result = await updateSystemSettings(next);
+      if (!result.ok) {
+        toast.error(result.error);
+        setValue(value);
+        return;
+      }
       toast.success("Settings saved");
     });
   }

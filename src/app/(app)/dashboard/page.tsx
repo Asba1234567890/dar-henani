@@ -27,17 +27,21 @@ import {
   paymentStatusVariant,
   eventTypeLabel,
 } from "@/lib/status";
+import { requireUser } from "@/lib/auth/guards";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const user = await requireUser();
+  const dict = getDictionary(user.language);
   const data = await getDashboardData();
   const { kpis } = data;
 
   return (
     <>
       <Topbar
-        title="Dashboard"
+        title={dict.dashboard.title}
         actions={
           <Button asChild>
             <Link href="/reservations?create=1">+ Create Reservation</Link>
@@ -52,14 +56,14 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="Arrivals today" value={kpis.arrivalsToday} icon={LogIn} tone="primary" />
-          <StatCard label="Departures today" value={kpis.departuresToday} icon={LogOut} tone="accent" />
-          <StatCard label="Guests staying" value={kpis.guestsStaying} icon={Users} tone="default" />
-          <StatCard label="Upcoming reservations" value={kpis.upcomingReservations} icon={CalendarClock} tone="default" />
-          <StatCard label="Revenue today" value={formatCurrency(kpis.revenueToday)} icon={Banknote} tone="success" />
-          <StatCard label="Revenue this month" value={formatCurrency(kpis.revenueMonth)} icon={TrendingUp} tone="success" />
-          <StatCard label="Outstanding payments" value={formatCurrency(kpis.outstanding)} icon={AlertCircle} tone="warning" />
-          <StatCard label="Occupancy rate" value={`${kpis.occupancyRate}%`} icon={Percent} tone="primary" />
+          <StatCard label={dict.dashboard.arrivalsToday} value={kpis.arrivalsToday} icon={LogIn} tone="primary" />
+          <StatCard label={dict.dashboard.departuresToday} value={kpis.departuresToday} icon={LogOut} tone="accent" />
+          <StatCard label={dict.dashboard.guestsStaying} value={kpis.guestsStaying} icon={Users} tone="default" />
+          <StatCard label={dict.dashboard.upcomingReservations} value={kpis.upcomingReservations} icon={CalendarClock} tone="default" />
+          <StatCard label={dict.dashboard.revenueToday} value={formatCurrency(kpis.revenueToday)} icon={Banknote} tone="success" />
+          <StatCard label={dict.dashboard.revenueThisMonth} value={formatCurrency(kpis.revenueMonth)} icon={TrendingUp} tone="success" />
+          <StatCard label={dict.dashboard.outstandingPayments} value={formatCurrency(kpis.outstanding)} icon={AlertCircle} tone="warning" />
+          <StatCard label={dict.dashboard.occupancyRate} value={`${kpis.occupancyRate}%`} icon={Percent} tone="primary" />
         </div>
 
         <Card>
@@ -68,7 +72,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {data.arrivals.length === 0 ? (
-              <EmptyState title="No arrivals today" description="Guests checking in today will appear here." />
+              <EmptyState title={dict.dashboard.noArrivals} description="Guests checking in today will appear here." />
             ) : (
               <Table>
                 <THead>
