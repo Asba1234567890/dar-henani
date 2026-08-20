@@ -21,7 +21,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
 
   function submitPassword() {
     if (newPassword !== confirmPassword) {
-      toast.error("New password and confirmation do not match.");
+      toast.error(t("profile.passwordMismatch"));
       return;
     }
     startPasswordTransition(async () => {
@@ -30,7 +30,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
         toast.error(result.error);
         return;
       }
-      toast.success("Password updated");
+      toast.success(t("profile.passwordUpdated"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");

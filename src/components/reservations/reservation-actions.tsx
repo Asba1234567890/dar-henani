@@ -7,6 +7,7 @@ import { LogIn, LogOut, Ban, Wallet, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPaymentDialog } from "@/components/reservations/add-payment-dialog";
 import { updateReservationStatus } from "@/app/(app)/reservations/actions";
+import { useI18n } from "@/lib/i18n/provider";
 import type { ReservationStatus } from "@prisma/client";
 
 export function ReservationActions({
@@ -19,6 +20,7 @@ export function ReservationActions({
   remainingAmount: number;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const [paymentOpen, setPaymentOpen] = useState(false);
 
@@ -30,7 +32,7 @@ export function ReservationActions({
         toast.error(result.error);
         return;
       }
-      toast.success("Reservation updated");
+      toast.success(t("reservations.reservationUpdated"));
       router.refresh();
     });
   }
@@ -38,30 +40,30 @@ export function ReservationActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="accent" onClick={() => setPaymentOpen(true)}>
-        <Wallet className="h-4 w-4" /> Add payment
+        <Wallet className="h-4 w-4" /> {t("reservations.addPayment")}
       </Button>
 
       {(status === "CONFIRMED" || status === "PENDING") && (
         <Button variant="outline" onClick={() => setStatus("CHECKED_IN")} disabled={pending}>
-          <LogIn className="h-4 w-4" /> Check-in
+          <LogIn className="h-4 w-4" /> {t("reservations.checkInAction")}
         </Button>
       )}
       {status === "CHECKED_IN" && (
         <Button variant="outline" onClick={() => setStatus("CHECKED_OUT")} disabled={pending}>
-          <LogOut className="h-4 w-4" /> Check-out
+          <LogOut className="h-4 w-4" /> {t("reservations.checkOutAction")}
         </Button>
       )}
       {status !== "CANCELLED" && status !== "CHECKED_OUT" && (
         <Button
           variant="destructive"
-          onClick={() => setStatus("CANCELLED", "Cancel this reservation? It will be preserved in history.")}
+          onClick={() => setStatus("CANCELLED", t("reservations.cancelConfirmDesc"))}
           disabled={pending}
         >
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />} Cancel
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />} {t("reservations.cancel")}
         </Button>
       )}
       <Button variant="ghost" onClick={() => window.print()}>
-        <Printer className="h-4 w-4" /> Print
+        <Printer className="h-4 w-4" /> {t("reservations.print")}
       </Button>
 
       <AddPaymentDialog

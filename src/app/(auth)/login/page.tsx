@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginForm, LoginBrandTagline } from "@/components/auth/login-form";
 
 export const metadata: Metadata = { title: "Sign in — Dar Henani PMS" };
 
@@ -12,7 +12,7 @@ export default function LoginPage() {
         </div>
         <div>
           <p className="font-display text-xl text-text-primary">Dar Henani</p>
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Guest House PMS</p>
+          <LoginBrandTagline />
         </div>
       </div>
       <LoginForm />

@@ -5,8 +5,10 @@ import { Menu } from "lucide-react";
 import { MobileSidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function Topbar({ title, actions }: { title: string; actions?: React.ReactNode }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,7 +19,7 @@ export function Topbar({ title, actions }: { title: string; actions?: React.Reac
           size="icon"
           className="shrink-0 lg:hidden"
           onClick={() => setOpen(true)}
-          aria-label="Open menu"
+          aria-label={t("common.openMenu")}
         >
           <Menu className="h-5 w-5" />
         </Button>

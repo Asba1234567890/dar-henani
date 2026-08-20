@@ -5,10 +5,12 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { updateNotificationSettings } from "@/app/(app)/settings/actions";
+import { useI18n } from "@/lib/i18n/provider";
 
 type Value = { pushNotificationsEnabled: boolean; tomorrowRemindersEnabled: boolean; sevenDayRemindersEnabled: boolean };
 
 export function NotificationSettingsForm({ initial }: { initial: Value }) {
+  const { t } = useI18n();
   const [value, setValue] = useState(initial);
   const [, startTransition] = useTransition();
 
@@ -23,32 +25,32 @@ export function NotificationSettingsForm({ initial }: { initial: Value }) {
         setValue(previous);
         return;
       }
-      toast.success("Notification settings saved");
+      toast.success(t("settings.notificationSettingsSaved"));
     });
   }
 
   return (
     <Card>
-      <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
+      <CardHeader><CardTitle>{t("settings.notifications")}</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-text-primary">Push notifications</p>
-            <p className="text-xs text-text-secondary">Send browser push notifications to admins for reservation events.</p>
+            <p className="text-sm font-medium text-text-primary">{t("settings.pushNotifications")}</p>
+            <p className="text-xs text-text-secondary">{t("settings.pushNotificationsDesc")}</p>
           </div>
           <Switch checked={value.pushNotificationsEnabled} onCheckedChange={(v) => update({ pushNotificationsEnabled: v })} />
         </div>
         <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
-            <p className="text-sm font-medium text-text-primary">Tomorrow reminders</p>
-            <p className="text-xs text-text-secondary">Notify about active stays/events happening the next day.</p>
+            <p className="text-sm font-medium text-text-primary">{t("settings.tomorrowReminders")}</p>
+            <p className="text-xs text-text-secondary">{t("settings.tomorrowRemindersDesc")}</p>
           </div>
           <Switch checked={value.tomorrowRemindersEnabled} onCheckedChange={(v) => update({ tomorrowRemindersEnabled: v })} />
         </div>
         <div className="flex items-center justify-between border-t border-border pt-4">
           <div>
-            <p className="text-sm font-medium text-text-primary">7-day reminders</p>
-            <p className="text-xs text-text-secondary">Notify exactly one week before an active stay/event.</p>
+            <p className="text-sm font-medium text-text-primary">{t("settings.sevenDayReminders")}</p>
+            <p className="text-xs text-text-secondary">{t("settings.sevenDayRemindersDesc")}</p>
           </div>
           <Switch checked={value.sevenDayRemindersEnabled} onCheckedChange={(v) => update({ sevenDayRemindersEnabled: v })} />
         </div>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function TagListManager({
   title,
@@ -23,6 +24,7 @@ export function TagListManager({
   placeholder: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [value, setValue] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -31,7 +33,7 @@ export function TagListManager({
     startTransition(async () => {
       const result = await onAdd(value.trim());
       if (!result.ok) {
-        toast.error(result.error || "Something went wrong.");
+        toast.error(result.error || t("common.somethingWentWrong"));
         return;
       }
       setValue("");
@@ -51,11 +53,11 @@ export function TagListManager({
       <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          {items.length === 0 && <p className="text-sm text-text-secondary">None yet.</p>}
+          {items.length === 0 && <p className="text-sm text-text-secondary">{t("common.noneYet")}</p>}
           {items.map((item) => (
             <Badge key={item.id} variant="outline" className="gap-1.5 pr-1.5">
               {item.name}
-              <button onClick={() => remove(item.id)} className="rounded-full p-0.5 hover:bg-muted" aria-label={`Remove ${item.name}`}>
+              <button onClick={() => remove(item.id)} className="rounded-full p-0.5 hover:bg-muted" aria-label={t("settings.removeItem", { name: item.name })}>
                 <X className="h-3 w-3" />
               </button>
             </Badge>
@@ -64,7 +66,7 @@ export function TagListManager({
         <div className="flex gap-2">
           <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder} onKeyDown={(e) => e.key === "Enter" && add()} />
           <Button variant="outline" onClick={add} disabled={pending || !value.trim()}>
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Add
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} {t("common.add")}
           </Button>
         </div>
       </CardContent>

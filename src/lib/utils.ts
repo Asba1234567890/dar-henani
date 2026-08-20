@@ -1,12 +1,17 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Language } from "@prisma/client";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "TND") {
-  return new Intl.NumberFormat("en-US", {
+function localeFor(language?: Language) {
+  return language === "FR" ? "fr-FR" : "en-GB";
+}
+
+export function formatCurrency(amount: number, currency = "TND", language?: Language) {
+  return new Intl.NumberFormat(language === "FR" ? "fr-FR" : "en-US", {
     style: "currency",
     currency,
     currencyDisplay: "narrowSymbol",
@@ -18,9 +23,9 @@ export function formatCurrency(amount: number, currency = "TND") {
     .trim();
 }
 
-export function formatDate(date: Date | string, opts: Intl.DateTimeFormatOptions = {}) {
+export function formatDate(date: Date | string, opts: Intl.DateTimeFormatOptions = {}, language?: Language) {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(localeFor(language), {
     day: "2-digit",
     month: "short",
     year: "numeric",

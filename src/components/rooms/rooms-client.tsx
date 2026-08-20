@@ -15,6 +15,7 @@ import { roomStatusLabel, roomStatusVariant } from "@/lib/status";
 import { updateRoomStatus } from "@/app/(app)/rooms/actions";
 import { RoomFormDialog, type RoomFormValue } from "@/components/rooms/room-form-dialog";
 import { RoomGalleryDialog } from "@/components/rooms/room-gallery-dialog";
+import { useI18n } from "@/lib/i18n/provider";
 import type { RoomStatus } from "@prisma/client";
 import type { listRoomsWithOccupancy } from "@/lib/rooms";
 
@@ -36,12 +37,15 @@ export function RoomsClient({
   rooms,
   roomTypes,
   amenities,
+  canManage,
 }: {
   rooms: RoomCard[];
   roomTypes: { id: string; name: string }[];
   amenities: { id: string; name: string }[];
+  canManage: boolean;
 }) {
   const router = useRouter();
+  const { t, dict } = useI18n();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<RoomFormValue | undefined>(undefined);
   const [galleryRoom, setGalleryRoom] = useState<RoomCard | null>(null);
@@ -69,25 +73,29 @@ export function RoomsClient({
   function changeStatus(id: string, status: RoomStatus) {
     startTransition(async () => {
       const result = await updateRoomStatus(id, status);
-      if (result.ok) {
-        toast.success("Room status updated");
-        router.refresh();
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
       }
+      toast.success(t("rooms.roomStatusUpdated"));
+      router.refresh();
     });
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
-        <Button onClick={openAdd}><Plus className="h-4 w-4" /> Add room</Button>
-      </div>
+      {canManage && (
+        <div className="flex justify-end">
+          <Button onClick={openAdd}><Plus className="h-4 w-4" /> {t("rooms.addRoom")}</Button>
+        </div>
+      )}
 
       {rooms.length === 0 ? (
         <EmptyState
           icon={BedDouble}
-          title="No rooms yet"
-          description="Add your first room to start taking stay reservations."
-          action={<Button onClick={openAdd}>+ Add room</Button>}
+          title={t("rooms.noRoomsYet")}
+          description={t("rooms.noRoomsYetDesc")}
+          action={canManage ? <Button onClick={openAdd}>{t("rooms.addRoom")}</Button> : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -116,14 +124,14 @@ export function RoomsClient({
               <div className="flex items-start justify-between gap-3 p-5 pb-3">
                 <div className="min-w-0">
                   <p className="font-display text-base font-medium text-text-primary">{room.name}</p>
-                  <p className="text-xs text-text-secondary">{room.roomType?.name ?? "Room"}</p>
+                  <p className="text-xs text-text-secondary">{room.roomType?.name ?? t("rooms.room")}</p>
                 </div>
-                <Badge variant={roomStatusVariant[room.status]}>{roomStatusLabel[room.status]}</Badge>
+                <Badge variant={roomStatusVariant[room.status]}>{roomStatusLabel(dict, room.status)}</Badge>
               </div>
               <div className="flex-1 space-y-3 px-5 pb-3 text-sm">
                 <div className="flex items-center gap-4 text-text-secondary">
-                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {room.capacity} guests</span>
-                  <span className="font-medium text-primary">{formatCurrency(room.pricePerNight)}/night</span>
+                  <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {room.capacity} {t("rooms.guestsCount")}</span>
+                  <span className="font-medium text-primary">{formatCurrency(room.pricePerNight)}{t("rooms.perNight")}</span>
                 </div>
                 {room.description && <p className="line-clamp-2 text-text-secondary">{room.description}</p>}
                 {room.amenities.length > 0 && (
@@ -139,29 +147,31 @@ export function RoomsClient({
                     <Link href={`/reservations/${room.currentReservation.id}`} className="font-medium hover:underline">
                       {room.currentReservation.guest.firstName} {room.currentReservation.guest.lastName}
                     </Link>{" "}
-                    until {new Date(room.currentReservation.checkOut!).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                    {t("rooms.until")} {new Date(room.currentReservation.checkOut!).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 border-t border-border p-3">
-                <Select
-                  className="h-9 flex-1 text-xs"
-                  value={room.status}
-                  onChange={(e) => changeStatus(room.id, e.target.value as RoomStatus)}
-                >
-                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{roomStatusLabel[s]}</option>)}
-                </Select>
-                <Button variant="outline" size="icon" onClick={() => openEdit(room)} aria-label="Edit room">
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              {canManage && (
+                <div className="flex items-center gap-2 border-t border-border p-3">
+                  <Select
+                    className="h-9 flex-1 text-xs"
+                    value={room.status}
+                    onChange={(e) => changeStatus(room.id, e.target.value as RoomStatus)}
+                  >
+                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{roomStatusLabel(dict, s)}</option>)}
+                  </Select>
+                  <Button variant="outline" size="icon" onClick={() => openEdit(room)} aria-label={t("rooms.editRoom")}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
             </Card>
             );
           })}
         </div>
       )}
 
-      <RoomFormDialog open={formOpen} onOpenChange={setFormOpen} roomTypes={roomTypes} amenities={amenities} initial={editing} />
+      {canManage && <RoomFormDialog open={formOpen} onOpenChange={setFormOpen} roomTypes={roomTypes} amenities={amenities} initial={editing} />}
       {galleryRoom && (
         <RoomGalleryDialog
           open={!!galleryRoom}

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/auth/guards";
 import { logAudit } from "@/lib/audit";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 const expenseSchema = z.object({
   category: z.string().min(1),
@@ -16,6 +17,7 @@ const expenseSchema = z.object({
 export async function addExpense(raw: z.infer<typeof expenseSchema>) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   try {
     const input = expenseSchema.parse(raw);
@@ -33,6 +35,6 @@ export async function addExpense(raw: z.infer<typeof expenseSchema>) {
     return { ok: true as const };
   } catch (err) {
     console.error("addExpense failed:", err);
-    return { ok: false as const, error: "Could not record the expense. Please try again." };
+    return { ok: false as const, error: dict.finance.addExpenseFailed };
   }
 }

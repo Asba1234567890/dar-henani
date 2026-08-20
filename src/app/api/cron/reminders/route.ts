@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getTomorrowReminderCandidates, getSevenDayReminderCandidates, formatReminder } from "@/lib/reminders";
-import { sendPushToActiveUsers } from "@/lib/push";
+import { sendPushToUser } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -10,7 +10,8 @@ export const maxDuration = 60;
 async function processBatch(
   candidates: Awaited<ReturnType<typeof getTomorrowReminderCandidates>>,
   kind: "TOMORROW" | "SEVEN_DAY",
-  pushEnabled: boolean
+  pushEnabled: boolean,
+  activeUsers: { id: string; language: "EN" | "FR" }[]
 ) {
   let sent = 0;
   let skipped = 0;
@@ -29,16 +30,22 @@ async function processBatch(
       continue;
     }
 
-    const { title, body } = formatReminder(reservation, kind);
-
     try {
-      const activeUsers = await prisma.user.findMany({ where: { active: true }, select: { id: true } });
+      // Each recipient gets their own title/body, generated in their own preferred language.
       await prisma.notification.createMany({
-        data: activeUsers.map((u) => ({ userId: u.id, title, body, reservationId: reservation.id })),
+        data: activeUsers.map((u) => {
+          const { title, body } = formatReminder(reservation, kind, u.language);
+          return { userId: u.id, title, body, reservationId: reservation.id };
+        }),
       });
 
       if (pushEnabled) {
-        await sendPushToActiveUsers({ title, body, url: `/reservations/${reservation.id}`, tag: `${kind}-${reservation.id}` });
+        await Promise.all(
+          activeUsers.map((u) => {
+            const { title, body } = formatReminder(reservation, kind, u.language);
+            return sendPushToUser(u.id, { title, body, url: `/reservations/${reservation.id}`, tag: `${kind}-${reservation.id}` });
+          })
+        );
       }
       sent++;
     } catch (err) {
@@ -68,16 +75,17 @@ export async function GET(req: NextRequest) {
       update: {},
     });
 
+    const activeUsers = await prisma.user.findMany({ where: { active: true }, select: { id: true, language: true } });
     const results = { tomorrow: { sent: 0, skipped: 0 }, sevenDay: { sent: 0, skipped: 0 } };
 
     if (settings.tomorrowRemindersEnabled) {
       const candidates = await getTomorrowReminderCandidates();
-      results.tomorrow = await processBatch(candidates, "TOMORROW", settings.pushNotificationsEnabled);
+      results.tomorrow = await processBatch(candidates, "TOMORROW", settings.pushNotificationsEnabled, activeUsers);
     }
 
     if (settings.sevenDayRemindersEnabled) {
       const candidates = await getSevenDayReminderCandidates();
-      results.sevenDay = await processBatch(candidates, "SEVEN_DAY", settings.pushNotificationsEnabled);
+      results.sevenDay = await processBatch(candidates, "SEVEN_DAY", settings.pushNotificationsEnabled, activeUsers);
     }
 
     return NextResponse.json({ ok: true, ...results });

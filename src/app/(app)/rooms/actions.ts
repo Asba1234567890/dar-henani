@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/auth/guards";
 import { logAudit } from "@/lib/audit";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 const roomSchema = z.object({
   name: z.string().min(1),
@@ -19,6 +20,7 @@ const roomSchema = z.object({
 export async function createRoom(raw: z.infer<typeof roomSchema>) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   try {
     const input = roomSchema.parse(raw);
@@ -38,13 +40,14 @@ export async function createRoom(raw: z.infer<typeof roomSchema>) {
     return { ok: true as const, id: room.id };
   } catch (err) {
     console.error("createRoom failed:", err);
-    return { ok: false as const, error: "Could not create the room. Please try again." };
+    return { ok: false as const, error: dict.rooms.createRoomFailed };
   }
 }
 
 export async function updateRoom(id: string, raw: z.infer<typeof roomSchema>) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   try {
     const input = roomSchema.parse(raw);
@@ -66,13 +69,14 @@ export async function updateRoom(id: string, raw: z.infer<typeof roomSchema>) {
     return { ok: true as const };
   } catch (err) {
     console.error("updateRoom failed:", err);
-    return { ok: false as const, error: "Could not update the room. Please try again." };
+    return { ok: false as const, error: dict.rooms.updateRoomFailed };
   }
 }
 
 export async function updateRoomStatus(id: string, status: "AVAILABLE" | "OCCUPIED" | "CLEANING" | "MAINTENANCE" | "OUT_OF_SERVICE") {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   try {
     await prisma.room.update({ where: { id }, data: { status } });
@@ -81,6 +85,6 @@ export async function updateRoomStatus(id: string, status: "AVAILABLE" | "OCCUPI
     return { ok: true as const };
   } catch (err) {
     console.error("updateRoomStatus failed:", err);
-    return { ok: false as const, error: "Could not update the room status. Please try again." };
+    return { ok: false as const, error: dict.rooms.updateRoomStatusFailed };
   }
 }

@@ -17,7 +17,7 @@ import { Input, Textarea, Select, Label, FieldGroup } from "@/components/ui/inpu
 import { Badge } from "@/components/ui/badge";
 import { cn, formatCurrency } from "@/lib/utils";
 import { createReservation, type CreateReservationInput } from "@/app/(app)/reservations/actions";
-import { bookingSourceLabel, eventTypeLabel, paymentMethodLabel } from "@/lib/status";
+import { useI18n } from "@/lib/i18n/provider";
 import type { BookingSource, EventType, PaymentMethod } from "@prisma/client";
 
 type RoomOption = {
@@ -32,20 +32,27 @@ type RoomOption = {
 
 type EventSpaceOption = { id: string; name: string; capacity: number | null; isAvailable: boolean };
 
-const SOURCES = Object.entries(bookingSourceLabel);
-const EVENT_TYPES = Object.entries(eventTypeLabel);
-const METHODS = Object.entries(paymentMethodLabel);
-const SERVICE_OPTIONS = ["Catering", "Decoration", "Music", "Photography", "Other"];
-
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
 export function CreateReservationDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const router = useRouter();
+  const { t, dict } = useI18n();
   const [pending, startTransition] = useTransition();
   const [step, setStep] = useState(0);
   const [resType, setResType] = useState<"STAY" | "EVENT" | null>(null);
+
+  const SOURCES = Object.entries(dict.enums.bookingSource);
+  const EVENT_TYPES = Object.entries(dict.enums.eventType);
+  const METHODS = Object.entries(dict.enums.paymentMethod);
+  const SERVICE_OPTIONS = [
+    { value: "Catering", label: t("reservations.serviceCatering") },
+    { value: "Decoration", label: t("reservations.serviceDecoration") },
+    { value: "Music", label: t("reservations.serviceMusic") },
+    { value: "Photography", label: t("reservations.servicePhotography") },
+    { value: "Other", label: t("reservations.serviceOther") },
+  ];
 
   // Stay state
   const [checkIn, setCheckIn] = useState(todayISO());
@@ -150,8 +157,8 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
       .finally(() => setLoadingSpaces(false));
   }, [resType, step, eventDate, eventStart, eventEnd]);
 
-  const stepsForStay = ["Type", "Dates & Room", "Guest", "Pricing & Source", "Payment & Notes"];
-  const stepsForEvent = ["Type", "Event Details", "Client", "Pricing & Services", "Payment & Notes"];
+  const stepsForStay = [t("reservations.stepType"), t("reservations.stepDatesRoom"), t("reservations.stepGuest"), t("reservations.stepPricingSource"), t("reservations.stepPaymentNotes")];
+  const stepsForEvent = [t("reservations.stepType"), t("reservations.stepEventDetails"), t("reservations.stepClient"), t("reservations.stepPricingServices"), t("reservations.stepPaymentNotes")];
   const steps = resType === "EVENT" ? stepsForEvent : stepsForStay;
 
   function canProceed() {
@@ -171,7 +178,7 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
   function handleSubmit() {
     if (pending) return;
     if (depositAmount > total) {
-      toast.error("Deposit cannot exceed the total amount.");
+      toast.error(t("reservations.depositExceedsTotal"));
       return;
     }
     startTransition(async () => {
@@ -220,12 +227,12 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
           toast.error(result.error);
           return;
         }
-        toast.success(`Reservation ${result.code} created`);
+        toast.success(t("reservations.createdSuccess", { code: result.code }));
         onOpenChange(false);
         router.push(`/reservations/${result.id}`);
         router.refresh();
       } catch {
-        toast.error("Something went wrong while creating the reservation. Please try again.");
+        toast.error(t("common.somethingWentWrong"));
       }
     });
   }
@@ -236,8 +243,8 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>Create reservation</DialogTitle>
-          <DialogDescription>Book a stay or an event for Dar Henani.</DialogDescription>
+          <DialogTitle>{t("reservations.dialogTitle")}</DialogTitle>
+          <DialogDescription>{t("reservations.dialogDescription")}</DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 px-6 pb-2">
@@ -270,8 +277,8 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
                 )}
               >
                 <BedDouble className="h-8 w-8 text-primary" />
-                <span className="font-display text-lg">Stay</span>
-                <span className="text-center text-xs text-text-secondary">Room accommodation booking</span>
+                <span className="font-display text-lg">{t("reservations.stay")}</span>
+                <span className="text-center text-xs text-text-secondary">{t("reservations.typeStayDesc")}</span>
               </button>
               <button
                 onClick={() => setResType("EVENT")}
@@ -281,8 +288,8 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
                 )}
               >
                 <PartyPopper className="h-8 w-8 text-primary" />
-                <span className="font-display text-lg">Event</span>
-                <span className="text-center text-xs text-text-secondary">Wedding, henna, birthday & more</span>
+                <span className="font-display text-lg">{t("reservations.event")}</span>
+                <span className="text-center text-xs text-text-secondary">{t("reservations.typeEventDesc")}</span>
               </button>
             </div>
           )}
@@ -291,20 +298,22 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <FieldGroup>
-                  <Label>Check-in</Label>
+                  <Label>{t("reservations.checkIn")}</Label>
                   <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Check-out</Label>
+                  <Label>{t("reservations.checkOut")}</Label>
                   <Input type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} />
                 </FieldGroup>
               </div>
-              <p className="text-sm text-text-secondary">{nights > 0 ? `${nights} night${nights > 1 ? "s" : ""}` : "Select valid dates"}</p>
+              <p className="text-sm text-text-secondary">
+                {nights > 0 ? `${nights} ${nights > 1 ? t("reservations.nightsPlural") : t("reservations.nights")}` : t("reservations.selectValidDates")}
+              </p>
 
               <div>
-                <Label>Available rooms</Label>
+                <Label>{t("reservations.availableRooms")}</Label>
                 {loadingRooms ? (
-                  <div className="flex items-center gap-2 py-6 text-sm text-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> Checking availability…</div>
+                  <div className="flex items-center gap-2 py-6 text-sm text-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> {t("common.checkingAvailability")}</div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     {rooms.map((room) => (
@@ -323,10 +332,10 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-text-primary">{room.name}</span>
-                          {!room.isAvailable && <Badge variant="error">Booked</Badge>}
+                          {!room.isAvailable && <Badge variant="error">{t("reservations.booked")}</Badge>}
                         </div>
-                        <span className="text-xs text-text-secondary">{room.roomType?.name ?? "Room"} · Sleeps {room.capacity}</span>
-                        <span className="text-sm font-medium text-primary">{formatCurrency(room.pricePerNight)} / night</span>
+                        <span className="text-xs text-text-secondary">{room.roomType?.name ?? t("rooms.room")} · {t("reservations.sleeps")} {room.capacity}</span>
+                        <span className="text-sm font-medium text-primary">{formatCurrency(room.pricePerNight)} {t("reservations.perNight")}</span>
                       </button>
                     ))}
                   </div>
@@ -339,39 +348,39 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <FieldGroup>
-                  <Label>Event type</Label>
+                  <Label>{t("reservations.eventType")}</Label>
                   <Select value={eventType} onChange={(e) => setEventType(e.target.value)}>
                     {EVENT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </Select>
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Event name</Label>
-                  <Input value={eventName} onChange={(e) => setEventName(e.target.value)} placeholder="e.g. Sara's Henna Night" />
+                  <Label>{t("reservations.eventName")}</Label>
+                  <Input value={eventName} onChange={(e) => setEventName(e.target.value)} placeholder={t("reservations.eventNamePlaceholder")} />
                 </FieldGroup>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <FieldGroup>
-                  <Label>Date</Label>
+                  <Label>{t("reservations.date")}</Label>
                   <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Start time</Label>
+                  <Label>{t("reservations.startTime")}</Label>
                   <Input type="time" value={eventStart} onChange={(e) => setEventStart(e.target.value)} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>End time</Label>
+                  <Label>{t("reservations.endTime")}</Label>
                   <Input type="time" value={eventEnd} onChange={(e) => setEventEnd(e.target.value)} />
                 </FieldGroup>
               </div>
               <FieldGroup className="max-w-[200px]">
-                <Label>Number of guests</Label>
+                <Label>{t("reservations.numberOfGuests")}</Label>
                 <Input type="number" min={1} value={guestCount} onChange={(e) => setGuestCount(Number(e.target.value))} />
               </FieldGroup>
 
               <div>
-                <Label>Event space</Label>
+                <Label>{t("reservations.eventSpace")}</Label>
                 {loadingSpaces ? (
-                  <div className="flex items-center gap-2 py-6 text-sm text-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> Checking availability…</div>
+                  <div className="flex items-center gap-2 py-6 text-sm text-text-secondary"><Loader2 className="h-4 w-4 animate-spin" /> {t("common.checkingAvailability")}</div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     {eventSpaces.map((space) => (
@@ -387,9 +396,9 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-text-primary">{space.name}</span>
-                          {!space.isAvailable && <Badge variant="error">Booked</Badge>}
+                          {!space.isAvailable && <Badge variant="error">{t("reservations.booked")}</Badge>}
                         </div>
-                        {space.capacity && <span className="text-xs text-text-secondary">Up to {space.capacity} guests</span>}
+                        {space.capacity && <span className="text-xs text-text-secondary">{t("reservations.upTo")} {space.capacity} {t("common.guests")}</span>}
                       </button>
                     ))}
                   </div>
@@ -402,33 +411,33 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FieldGroup>
-                  <Label>First name</Label>
+                  <Label>{t("reservations.firstName")}</Label>
                   <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Last name</Label>
+                  <Label>{t("reservations.lastName")}</Label>
                   <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Phone</Label>
+                  <Label>{t("reservations.phone")}</Label>
                   <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+212 6..." />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Email</Label>
+                  <Label>{t("reservations.email")}</Label>
                   <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>CIN / Passport</Label>
+                  <Label>{t("reservations.idNumber")}</Label>
                   <Input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} />
                 </FieldGroup>
                 {resType === "STAY" && (
                   <div className="grid grid-cols-2 gap-4">
                     <FieldGroup>
-                      <Label>Adults</Label>
+                      <Label>{t("reservations.adults")}</Label>
                       <Input type="number" min={1} value={adults} onChange={(e) => setAdults(Number(e.target.value))} />
                     </FieldGroup>
                     <FieldGroup>
-                      <Label>Children</Label>
+                      <Label>{t("reservations.children")}</Label>
                       <Input type="number" min={0} value={children} onChange={(e) => setChildren(Number(e.target.value))} />
                     </FieldGroup>
                   </div>
@@ -440,7 +449,7 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
           {step === 3 && (
             <div className="space-y-5">
               <FieldGroup className="max-w-xs">
-                <Label>Booking source</Label>
+                <Label>{t("reservations.bookingSource")}</Label>
                 <Select value={source} onChange={(e) => setSource(e.target.value)}>
                   {SOURCES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </Select>
@@ -449,19 +458,19 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
               {resType === "STAY" ? (
                 <div className="grid grid-cols-2 gap-4">
                   <FieldGroup>
-                    <Label>Price / night</Label>
+                    <Label>{t("reservations.pricePerNight")}</Label>
                     <Input type="number" min={0} value={pricePerNight} onChange={(e) => setPricePerNight(Number(e.target.value))} />
                   </FieldGroup>
                   <FieldGroup>
-                    <Label>Nights</Label>
+                    <Label>{t("reservations.nightsLabel")}</Label>
                     <Input value={nights} disabled />
                   </FieldGroup>
                   <FieldGroup>
-                    <Label>Extra charges</Label>
+                    <Label>{t("reservations.extraCharges")}</Label>
                     <Input type="number" min={0} value={extraCharges} onChange={(e) => setExtraCharges(Number(e.target.value))} />
                   </FieldGroup>
                   <FieldGroup>
-                    <Label>Discount</Label>
+                    <Label>{t("reservations.discount")}</Label>
                     <Input type="number" min={0} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
                   </FieldGroup>
                 </div>
@@ -469,32 +478,32 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FieldGroup>
-                      <Label>Base price</Label>
+                      <Label>{t("reservations.basePrice")}</Label>
                       <Input type="number" min={0} value={basePrice} onChange={(e) => setBasePrice(Number(e.target.value))} />
                     </FieldGroup>
                     <FieldGroup>
-                      <Label>Extra services cost</Label>
+                      <Label>{t("reservations.extraServicesCost")}</Label>
                       <Input type="number" min={0} value={extraCharges} onChange={(e) => setExtraCharges(Number(e.target.value))} />
                     </FieldGroup>
                     <FieldGroup>
-                      <Label>Discount</Label>
+                      <Label>{t("reservations.discount")}</Label>
                       <Input type="number" min={0} value={discount} onChange={(e) => setDiscount(Number(e.target.value))} />
                     </FieldGroup>
                   </div>
                   <div>
-                    <Label>Optional services</Label>
+                    <Label>{t("reservations.optionalServices")}</Label>
                     <div className="flex flex-wrap gap-2">
                       {SERVICE_OPTIONS.map((s) => (
                         <button
-                          key={s}
+                          key={s.value}
                           type="button"
-                          onClick={() => setServices((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+                          onClick={() => setServices((prev) => (prev.includes(s.value) ? prev.filter((x) => x !== s.value) : [...prev, s.value]))}
                           className={cn(
                             "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                            services.includes(s) ? "border-primary bg-primary/10 text-primary" : "border-border-strong text-text-secondary hover:bg-muted"
+                            services.includes(s.value) ? "border-primary bg-primary/10 text-primary" : "border-border-strong text-text-secondary hover:bg-muted"
                           )}
                         >
-                          {s}
+                          {s.label}
                         </button>
                       ))}
                     </div>
@@ -503,10 +512,10 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
               )}
 
               <div className="rounded-[var(--radius-md)] bg-muted p-4 text-sm">
-                <div className="flex justify-between py-0.5"><span className="text-text-secondary">Subtotal</span><span>{formatCurrency(resType === "STAY" ? stayBase : basePrice)}</span></div>
-                <div className="flex justify-between py-0.5"><span className="text-text-secondary">Extra charges</span><span>+ {formatCurrency(extraCharges)}</span></div>
-                <div className="flex justify-between py-0.5"><span className="text-text-secondary">Discount</span><span>- {formatCurrency(discount)}</span></div>
-                <div className="mt-1 flex justify-between border-t border-border-strong pt-1.5 font-medium text-text-primary"><span>Total</span><span>{formatCurrency(total)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-text-secondary">{t("reservations.subtotal")}</span><span>{formatCurrency(resType === "STAY" ? stayBase : basePrice)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-text-secondary">{t("reservations.extraCharges")}</span><span>+ {formatCurrency(extraCharges)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-text-secondary">{t("reservations.discount")}</span><span>- {formatCurrency(discount)}</span></div>
+                <div className="mt-1 flex justify-between border-t border-border-strong pt-1.5 font-medium text-text-primary"><span>{t("common.total")}</span><span>{formatCurrency(total)}</span></div>
               </div>
             </div>
           )}
@@ -515,27 +524,27 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <FieldGroup>
-                  <Label>Total amount</Label>
+                  <Label>{t("reservations.totalAmount")}</Label>
                   <Input value={formatCurrency(total)} disabled />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Deposit / amount paid</Label>
+                  <Label>{t("reservations.depositAmountPaid")}</Label>
                   <Input type="number" min={0} max={total} value={depositAmount} onChange={(e) => setDepositAmount(Number(e.target.value))} />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Remaining balance</Label>
+                  <Label>{t("reservations.remainingBalance")}</Label>
                   <Input value={formatCurrency(remaining)} disabled />
                 </FieldGroup>
                 <FieldGroup>
-                  <Label>Payment method</Label>
+                  <Label>{t("reservations.paymentMethod")}</Label>
                   <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                     {METHODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </Select>
                 </FieldGroup>
               </div>
               <FieldGroup>
-                <Label>Notes</Label>
-                <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any special requests or internal notes…" />
+                <Label>{t("common.notes")}</Label>
+                <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("reservations.notesPlaceholder")} />
               </FieldGroup>
             </div>
           )}
@@ -544,17 +553,17 @@ export function CreateReservationDialog({ open, onOpenChange }: { open: boolean;
         <DialogFooter>
           {step > 0 && (
             <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={pending}>
-              <ChevronLeft className="h-4 w-4" /> Back
+              <ChevronLeft className="h-4 w-4" /> {t("common.back")}
             </Button>
           )}
           {!isLast ? (
             <Button onClick={() => setStep((s) => s + 1)} disabled={!canProceed()}>
-              Next <ChevronRight className="h-4 w-4" />
+              {t("common.next")} <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button onClick={handleSubmit} disabled={pending}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Create Reservation
+              {t("reservations.createReservationButton")}
             </Button>
           )}
         </DialogFooter>

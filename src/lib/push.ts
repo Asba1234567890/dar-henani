@@ -41,9 +41,3 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     })
   );
 }
-
-/** Sends a push notification to every active user (used for reservation reminders). */
-export async function sendPushToActiveUsers(payload: PushPayload) {
-  const users = await prisma.user.findMany({ where: { active: true }, select: { id: true } });
-  await Promise.all(users.map((u) => sendPushToUser(u.id, payload)));
-}

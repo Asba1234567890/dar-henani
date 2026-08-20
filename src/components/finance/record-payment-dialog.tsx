@@ -8,14 +8,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input, Select, Label, FieldGroup, Textarea } from "@/components/ui/input";
 import { addPayment } from "@/app/(app)/reservations/actions";
-import { paymentMethodLabel } from "@/lib/status";
 import { formatCurrency } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
 import type { PaymentMethod } from "@prisma/client";
 
 type DueReservation = { id: string; code: string; remainingAmount: number; guest: { firstName: string; lastName: string } };
 
 export function RecordPaymentDialog({ open, onOpenChange, dueReservations }: { open: boolean; onOpenChange: (v: boolean) => void; dueReservations: DueReservation[] }) {
   const router = useRouter();
+  const { t, dict } = useI18n();
   const [pending, startTransition] = useTransition();
   const [reservationId, setReservationId] = useState(dueReservations[0]?.id ?? "");
   const [amount, setAmount] = useState(dueReservations[0]?.remainingAmount ?? 0);
@@ -31,7 +32,7 @@ export function RecordPaymentDialog({ open, onOpenChange, dueReservations }: { o
         toast.error(result.error);
         return;
       }
-      toast.success("Payment recorded");
+      toast.success(t("reservations.paymentRecorded"));
       onOpenChange(false);
       router.refresh();
     });
@@ -41,9 +42,9 @@ export function RecordPaymentDialog({ open, onOpenChange, dueReservations }: { o
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent size="sm">
-          <DialogHeader><DialogTitle>Record payment</DialogTitle></DialogHeader>
-          <div className="px-6 py-6 text-sm text-text-secondary">No reservations currently have an outstanding balance.</div>
-          <DialogFooter><Button onClick={() => onOpenChange(false)}>Close</Button></DialogFooter>
+          <DialogHeader><DialogTitle>{t("reservations.recordPayment")}</DialogTitle></DialogHeader>
+          <div className="px-6 py-6 text-sm text-text-secondary">{t("finance.noOutstandingReservations")}</div>
+          <DialogFooter><Button onClick={() => onOpenChange(false)}>{t("common.close")}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     );
@@ -52,10 +53,10 @@ export function RecordPaymentDialog({ open, onOpenChange, dueReservations }: { o
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
-        <DialogHeader><DialogTitle>Record payment</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("reservations.recordPayment")}</DialogTitle></DialogHeader>
         <div className="space-y-4 px-6 py-2">
           <FieldGroup>
-            <Label>Reservation</Label>
+            <Label>{t("finance.tableReservation")}</Label>
             <Select
               value={reservationId}
               onChange={(e) => {
@@ -66,31 +67,31 @@ export function RecordPaymentDialog({ open, onOpenChange, dueReservations }: { o
             >
               {dueReservations.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.code} — {r.guest.firstName} {r.guest.lastName} (due {formatCurrency(r.remainingAmount)})
+                  {r.code} — {r.guest.firstName} {r.guest.lastName} ({t("finance.due")} {formatCurrency(r.remainingAmount)})
                 </option>
               ))}
             </Select>
           </FieldGroup>
           <FieldGroup>
-            <Label>Amount</Label>
+            <Label>{t("finance.amount")}</Label>
             <Input type="number" min={0} max={selected?.remainingAmount} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
           </FieldGroup>
           <FieldGroup>
-            <Label>Payment method</Label>
+            <Label>{t("reservations.paymentMethod")}</Label>
             <Select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
-              {Object.entries(paymentMethodLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              {Object.entries(dict.enums.paymentMethod).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </Select>
           </FieldGroup>
           <FieldGroup>
-            <Label>Note (optional)</Label>
+            <Label>{t("reservations.note")} ({t("common.optional")})</Label>
             <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
           </FieldGroup>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={pending || amount <= 0}>
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Record payment
+            {t("reservations.recordPayment")}
           </Button>
         </DialogFooter>
       </DialogContent>

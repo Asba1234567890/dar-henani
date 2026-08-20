@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/auth/guards";
 import { hashPassword } from "@/lib/auth/password";
 import { logAudit } from "@/lib/audit";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 const propertySchema = z.object({
   propertyName: z.string().min(1),
@@ -92,7 +93,8 @@ export async function updateNotificationSettings(raw: z.infer<typeof notificatio
 export async function addRoomType(name: string, description?: string) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
-  if (!name.trim()) return { ok: false as const, error: "Name is required." };
+  const dict = getDictionary(auth.user.language);
+  if (!name.trim()) return { ok: false as const, error: dict.settings.nameRequired };
   await prisma.roomType.create({ data: { name: name.trim(), description } });
   revalidatePath("/settings");
   return { ok: true as const };
@@ -101,11 +103,12 @@ export async function addRoomType(name: string, description?: string) {
 export async function deleteRoomType(id: string) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
   try {
     await prisma.roomType.delete({ where: { id } });
   } catch (err) {
     console.error("deleteRoomType failed:", err);
-    return { ok: false as const, error: "Could not delete this room type — it may still be assigned to a room." };
+    return { ok: false as const, error: dict.settings.deleteRoomTypeFailed };
   }
   revalidatePath("/settings");
   return { ok: true as const };
@@ -114,7 +117,8 @@ export async function deleteRoomType(id: string) {
 export async function addAmenity(name: string) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
-  if (!name.trim()) return { ok: false as const, error: "Name is required." };
+  const dict = getDictionary(auth.user.language);
+  if (!name.trim()) return { ok: false as const, error: dict.settings.nameRequired };
   await prisma.amenity.create({ data: { name: name.trim() } });
   revalidatePath("/settings");
   return { ok: true as const };
@@ -123,11 +127,12 @@ export async function addAmenity(name: string) {
 export async function deleteAmenity(id: string) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
   try {
     await prisma.amenity.delete({ where: { id } });
   } catch (err) {
     console.error("deleteAmenity failed:", err);
-    return { ok: false as const, error: "Could not delete this amenity." };
+    return { ok: false as const, error: dict.settings.deleteAmenityFailed };
   }
   revalidatePath("/settings");
   return { ok: true as const };
@@ -148,20 +153,21 @@ const userSchema = z.object({
 export async function createUser(raw: z.infer<typeof userSchema>) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   let input: z.infer<typeof userSchema>;
   try {
     input = userSchema.parse(raw);
   } catch (err) {
-    return { ok: false as const, error: err instanceof z.ZodError ? err.issues[0].message : "Invalid input." };
+    return { ok: false as const, error: err instanceof z.ZodError ? err.issues[0].message : dict.settings.invalidInput };
   }
 
   try {
     const existingUsername = await prisma.user.findUnique({ where: { username: input.username } });
-    if (existingUsername) return { ok: false as const, error: "This username is already taken." };
+    if (existingUsername) return { ok: false as const, error: dict.settings.usernameTaken };
     if (input.email) {
       const existingEmail = await prisma.user.findUnique({ where: { email: input.email } });
-      if (existingEmail) return { ok: false as const, error: "A user with this email already exists." };
+      if (existingEmail) return { ok: false as const, error: dict.settings.emailTaken };
     }
 
     const passwordHash = await hashPassword(input.temporaryPassword);
@@ -180,15 +186,16 @@ export async function createUser(raw: z.infer<typeof userSchema>) {
     return { ok: true as const };
   } catch (err) {
     console.error("createUser failed:", err);
-    return { ok: false as const, error: "Could not create the user. Please try again." };
+    return { ok: false as const, error: dict.settings.createUserFailed };
   }
 }
 
 export async function updateUserRole(id: string, role: "ADMIN" | "USER") {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
   if (id === auth.user.id && role !== "ADMIN") {
-    return { ok: false as const, error: "You cannot remove your own admin role." };
+    return { ok: false as const, error: dict.settings.cannotRemoveOwnAdmin };
   }
   await prisma.user.update({ where: { id }, data: { role } });
   await logAudit(auth.user.id, "USER_ROLE_CHANGED", { targetType: "User", targetId: id, metadata: { role } });
@@ -208,7 +215,8 @@ export async function toggleUserActive(id: string, active: boolean) {
   const auth = await authorize("ADMIN");
   if (!auth.ok) return auth;
   if (id === auth.user.id && !active) {
-    return { ok: false as const, error: "You cannot deactivate your own account." };
+    const dict = getDictionary(auth.user.language);
+    return { ok: false as const, error: dict.settings.cannotDeactivateSelf };
   }
   await prisma.user.update({ where: { id }, data: { active } });
   await logAudit(auth.user.id, active ? "USER_ACTIVATED" : "USER_DEACTIVATED", { targetType: "User", targetId: id });

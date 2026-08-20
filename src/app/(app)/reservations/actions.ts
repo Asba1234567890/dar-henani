@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { generateReservationCode, isRoomAvailable, isEventSpaceAvailable } from "@/lib/reservations";
 import { authorize } from "@/lib/auth/guards";
 import { logAudit } from "@/lib/audit";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 const guestSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -124,12 +125,13 @@ async function createReservationWithRetry(
 export async function createReservation(raw: CreateReservationInput) {
   const auth = await authorize();
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   let input: CreateReservationInput;
   try {
     input = createReservationSchema.parse(raw);
   } catch {
-    return { ok: false as const, error: "Invalid reservation details. Please check the form and try again." };
+    return { ok: false as const, error: dict.reservations.invalidReservationDetails };
   }
 
   const totalAmount = Math.max(input.basePrice + input.extraCharges - input.discount, 0);
@@ -139,16 +141,16 @@ export async function createReservation(raw: CreateReservationInput) {
       const checkIn = new Date(input.checkIn);
       const checkOut = new Date(input.checkOut);
       if (checkOut <= checkIn) {
-        return { ok: false as const, error: "Check-out must be after check-in." };
+        return { ok: false as const, error: dict.reservations.checkOutBeforeCheckIn };
       }
       const room = await prisma.room.findUnique({ where: { id: input.roomId } });
-      if (!room) return { ok: false as const, error: "Selected room no longer exists." };
+      if (!room) return { ok: false as const, error: dict.reservations.roomNoLongerExists };
       if (room.status === "MAINTENANCE" || room.status === "OUT_OF_SERVICE") {
-        return { ok: false as const, error: "This room is not available for booking." };
+        return { ok: false as const, error: dict.reservations.roomNotAvailableForBooking };
       }
       const available = await isRoomAvailable(input.roomId, checkIn, checkOut);
       if (!available) {
-        return { ok: false as const, error: "This room is already reserved for these dates." };
+        return { ok: false as const, error: dict.reservations.roomUnavailable };
       }
 
       const guest = await findOrCreateGuest(input.guest);
@@ -186,11 +188,11 @@ export async function createReservation(raw: CreateReservationInput) {
     // EVENT
     const eventDate = new Date(input.eventDate);
     const eventSpace = await prisma.eventSpace.findUnique({ where: { id: input.eventSpaceId } });
-    if (!eventSpace) return { ok: false as const, error: "Selected event space no longer exists." };
+    if (!eventSpace) return { ok: false as const, error: dict.reservations.eventSpaceNoLongerExists };
 
     const available = await isEventSpaceAvailable(input.eventSpaceId, eventDate, input.eventStart, input.eventEnd);
     if (!available) {
-      return { ok: false as const, error: "This event space is already booked for the selected time." };
+      return { ok: false as const, error: dict.reservations.eventSpaceUnavailable };
     }
 
     const guest = await findOrCreateGuest(input.guest);
@@ -227,7 +229,7 @@ export async function createReservation(raw: CreateReservationInput) {
     return { ok: true as const, id: reservation.id, code: reservation.code };
   } catch (err) {
     console.error("createReservation failed:", err);
-    return { ok: false as const, error: "Something went wrong while creating the reservation. Please try again." };
+    return { ok: false as const, error: dict.reservations.createFailedGeneric };
   }
 }
 
@@ -239,10 +241,11 @@ export async function addPayment(
 ) {
   const auth = await authorize();
   if (!auth.ok) return auth;
-  if (amount <= 0) return { ok: false as const, error: "Amount must be greater than zero." };
+  const dict = getDictionary(auth.user.language);
+  if (amount <= 0) return { ok: false as const, error: dict.reservations.amountMustBePositive };
   try {
     const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
-    if (!reservation) return { ok: false as const, error: "Reservation not found." };
+    if (!reservation) return { ok: false as const, error: dict.reservations.reservationNotFound };
 
     await prisma.payment.create({
       data: { reservationId, amount, method, note: note || undefined, recordedById: auth.user.id },
@@ -255,7 +258,7 @@ export async function addPayment(
     return { ok: true as const };
   } catch (err) {
     console.error("addPayment failed:", err);
-    return { ok: false as const, error: "Could not record the payment. Please try again." };
+    return { ok: false as const, error: dict.reservations.addPaymentFailed };
   }
 }
 
@@ -265,9 +268,10 @@ export async function updateReservationStatus(
 ) {
   const auth = await authorize();
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
   try {
     const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
-    if (!reservation) return { ok: false as const, error: "Reservation not found." };
+    if (!reservation) return { ok: false as const, error: dict.reservations.reservationNotFound };
 
     const data: Record<string, unknown> = { status };
     if (status === "CHECKED_OUT" && reservation.type === "STAY" && reservation.roomId) {
@@ -289,22 +293,23 @@ export async function updateReservationStatus(
     return { ok: true as const };
   } catch (err) {
     console.error("updateReservationStatus failed:", err);
-    return { ok: false as const, error: "Could not update the reservation status. Please try again." };
+    return { ok: false as const, error: dict.reservations.updateStatusFailed };
   }
 }
 
 export async function updateReservationNotes(reservationId: string, notes: string) {
   const auth = await authorize();
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
   try {
     const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
-    if (!reservation) return { ok: false as const, error: "Reservation not found." };
+    if (!reservation) return { ok: false as const, error: dict.reservations.reservationNotFound };
 
     await prisma.reservation.update({ where: { id: reservationId }, data: { notes } });
     revalidatePath(`/reservations/${reservationId}`);
     return { ok: true as const };
   } catch (err) {
     console.error("updateReservationNotes failed:", err);
-    return { ok: false as const, error: "Could not update the notes. Please try again." };
+    return { ok: false as const, error: dict.reservations.updateNotesFailed };
   }
 }

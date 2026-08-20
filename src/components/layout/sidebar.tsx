@@ -115,6 +115,7 @@ export function Sidebar() {
 }
 
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n();
   // Lock background scroll while the mobile sidebar is open so content can't bleed/scroll behind it.
   useEffect(() => {
     if (!open) return;
@@ -132,7 +133,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
       <div className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col bg-surface shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200">
         <button
           onClick={onClose}
-          aria-label="Close menu"
+          aria-label={t("common.closeMenu")}
           className="absolute right-3 top-6 z-10 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
         >
           <X className="h-4 w-4" />

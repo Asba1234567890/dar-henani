@@ -13,12 +13,8 @@ import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateReservationDialog } from "@/components/reservations/create-reservation-dialog";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
-import {
-  reservationStatusLabel,
-  reservationStatusVariant,
-  paymentStatusLabel,
-  paymentStatusVariant,
-} from "@/lib/status";
+import { reservationStatusLabel, reservationStatusVariant, paymentStatusLabel, paymentStatusVariant } from "@/lib/status";
+import { useI18n } from "@/lib/i18n/provider";
 import type { ReservationWithRelations } from "@/lib/reservations";
 
 type Derived = ReservationWithRelations & { amountPaid: number; remainingAmount: number; paymentStatus: "UNPAID" | "PARTIALLY_PAID" | "PAID" };
@@ -29,10 +25,20 @@ type Filter = (typeof FILTERS)[number];
 export function ReservationsClient({ reservations }: { reservations: Derived[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t, dict } = useI18n();
   const [filter, setFilter] = useState<Filter>("All");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(() => searchParams.get("create") === "1");
+
+  const FILTER_LABELS: Record<Filter, string> = {
+    All: t("common.allStatuses"),
+    Today: t("common.today"),
+    Upcoming: t("dashboard.upcomingReservations"),
+    Stays: t("reservations.stay") + "s",
+    Events: t("reservations.event") + "s",
+    Cancelled: t("enums.reservationStatus.CANCELLED"),
+  };
 
   useEffect(() => {
     if (searchParams.get("create") === "1") {
@@ -41,8 +47,8 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
   }, [searchParams, router]);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query), 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedQuery(query), 250);
+    return () => clearTimeout(timer);
   }, [query]);
 
   const today = useMemo(() => new Date(new Date().toDateString()), []);
@@ -90,7 +96,7 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
         <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
           <TabsList className="flex-wrap">
             {FILTERS.map((f) => (
-              <TabsTrigger key={f} value={f}>{f}</TabsTrigger>
+              <TabsTrigger key={f} value={f}>{FILTER_LABELS[f]}</TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
@@ -98,13 +104,13 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search guest, phone, or ID…"
+            placeholder={t("reservations.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
         <Button onClick={() => setCreateOpen(true)} className="sm:hidden">
-          <CalendarPlus className="h-4 w-4" /> Create Reservation
+          <CalendarPlus className="h-4 w-4" /> {t("reservations.newReservation")}
         </Button>
       </div>
 
@@ -113,24 +119,24 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
           {filtered.length === 0 ? (
             <EmptyState
               className="border-none"
-              title="No reservations found"
-              description={reservations.length === 0 ? "Create your first reservation to start managing Dar Henani." : "Try adjusting your filters or search."}
-              action={reservations.length === 0 ? <Button onClick={() => setCreateOpen(true)}>+ Create Reservation</Button> : undefined}
+              title={t("reservations.noResults")}
+              description={reservations.length === 0 ? t("dashboard.noReservationsYetDesc") : t("reservations.tryAdjustingFilters")}
+              action={reservations.length === 0 ? <Button onClick={() => setCreateOpen(true)}>{t("dashboard.createReservation")}</Button> : undefined}
             />
           ) : (
             <Table>
               <THead>
                 <TR>
-                  <TH>ID</TH>
-                  <TH>Type</TH>
-                  <TH>Guest</TH>
-                  <TH>Date</TH>
-                  <TH>Room / Event</TH>
-                  <TH>Total</TH>
-                  <TH>Paid</TH>
-                  <TH>Remaining</TH>
-                  <TH>Payment</TH>
-                  <TH>Status</TH>
+                  <TH>{t("reservations.tableCode")}</TH>
+                  <TH>{t("reservations.tableType")}</TH>
+                  <TH>{t("reservations.tableGuest")}</TH>
+                  <TH>{t("reservations.tableDates")}</TH>
+                  <TH>{t("reservations.tableRoomOrSpace")}</TH>
+                  <TH>{t("reservations.tableTotal")}</TH>
+                  <TH>{t("reservations.amountPaid")}</TH>
+                  <TH>{t("reservations.remaining")}</TH>
+                  <TH>{t("dashboard.tablePayment")}</TH>
+                  <TH>{t("reservations.tableStatus")}</TH>
                 </TR>
               </THead>
               <TBody>
@@ -140,7 +146,7 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
                       <Link href={`/reservations/${r.id}`} className="hover:text-primary">{r.code}</Link>
                     </TD>
                     <TD>
-                      <Badge variant={r.type === "STAY" ? "primary" : "accent"}>{r.type === "STAY" ? "Stay" : "Event"}</Badge>
+                      <Badge variant={r.type === "STAY" ? "primary" : "accent"}>{r.type === "STAY" ? t("reservations.stay") : t("reservations.event")}</Badge>
                     </TD>
                     <TD>
                       <Link href={`/reservations/${r.id}`} className="font-medium hover:text-primary">
@@ -152,8 +158,8 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
                     <TD>{formatCurrency(r.totalAmount)}</TD>
                     <TD className="text-success">{formatCurrency(r.amountPaid)}</TD>
                     <TD className={cn(r.remainingAmount > 0 && "text-error font-medium")}>{formatCurrency(r.remainingAmount)}</TD>
-                    <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel[r.paymentStatus]}</Badge></TD>
-                    <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel[r.status]}</Badge></TD>
+                    <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel(dict, r.paymentStatus)}</Badge></TD>
+                    <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel(dict, r.status)}</Badge></TD>
                   </TR>
                 ))}
               </TBody>

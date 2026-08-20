@@ -89,12 +89,12 @@ export function NotificationBell() {
 
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        toast.error("Notification permission was not granted.");
+        toast.error(t("notifications.permissionDenied"));
         return;
       }
       const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!publicKey) {
-        toast.error("Push notifications are not configured on this server.");
+        toast.error(t("notifications.notConfigured"));
         return;
       }
       const sub = await registration.pushManager.subscribe({
@@ -107,10 +107,10 @@ export function NotificationBell() {
         body: JSON.stringify(sub.toJSON()),
       });
       setPushSubscribed(true);
-      toast.success("Push notifications enabled");
+      toast.success(t("notifications.pushEnabled"));
     } catch (err) {
       console.error("togglePush failed:", err);
-      toast.error("Could not update push notification settings.");
+      toast.error(t("common.somethingWentWrong"));
     } finally {
       setPushPending(false);
     }
@@ -120,7 +120,8 @@ export function NotificationBell() {
     if (!n.read) {
       setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
       setUnreadCount((c) => Math.max(0, c - 1));
-      await markNotificationRead(n.id);
+      const result = await markNotificationRead(n.id);
+      if (!result.ok) toast.error(result.error);
     }
     setOpen(false);
     if (n.reservationId) router.push(`/reservations/${n.reservationId}`);
@@ -129,7 +130,8 @@ export function NotificationBell() {
   async function handleMarkAllRead() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
-    await markAllNotificationsRead();
+    const result = await markAllNotificationsRead();
+    if (!result.ok) toast.error(result.error);
   }
 
   return (
@@ -160,7 +162,7 @@ export function NotificationBell() {
                 onClick={togglePush}
                 disabled={!pushSupported || pushPending}
                 className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary disabled:opacity-40"
-                title={pushSubscribed ? "Disable push notifications" : "Enable push notifications"}
+                title={pushSubscribed ? t("notifications.disablePush") : t("notifications.enablePush")}
               >
                 {pushPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : pushSubscribed ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
               </button>

@@ -20,13 +20,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import {
-  reservationStatusLabel,
-  reservationStatusVariant,
-  paymentStatusLabel,
-  paymentStatusVariant,
-  eventTypeLabel,
-} from "@/lib/status";
+import { reservationStatusLabel, reservationStatusVariant, paymentStatusLabel, paymentStatusVariant, eventTypeLabel } from "@/lib/status";
 import { requireUser } from "@/lib/auth/guards";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 
@@ -37,6 +31,8 @@ export default async function DashboardPage() {
   const dict = getDictionary(user.language);
   const data = await getDashboardData();
   const { kpis } = data;
+  const fmtDate = (d: Date | string, opts?: Intl.DateTimeFormatOptions) => formatDate(d, opts, user.language);
+  const fmtCurrency = (n: number) => formatCurrency(n, undefined, user.language);
 
   return (
     <>
@@ -44,14 +40,14 @@ export default async function DashboardPage() {
         title={dict.dashboard.title}
         actions={
           <Button asChild>
-            <Link href="/reservations?create=1">+ Create Reservation</Link>
+            <Link href="/reservations?create=1">{dict.dashboard.createReservation}</Link>
           </Button>
         }
       />
       <PageContainer className="space-y-8">
         <div className="flex items-center justify-between">
           <p className="text-sm text-text-secondary">
-            {formatDate(data.date, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+            {fmtDate(data.date, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
           </p>
         </div>
 
@@ -60,29 +56,29 @@ export default async function DashboardPage() {
           <StatCard label={dict.dashboard.departuresToday} value={kpis.departuresToday} icon={LogOut} tone="accent" />
           <StatCard label={dict.dashboard.guestsStaying} value={kpis.guestsStaying} icon={Users} tone="default" />
           <StatCard label={dict.dashboard.upcomingReservations} value={kpis.upcomingReservations} icon={CalendarClock} tone="default" />
-          <StatCard label={dict.dashboard.revenueToday} value={formatCurrency(kpis.revenueToday)} icon={Banknote} tone="success" />
-          <StatCard label={dict.dashboard.revenueThisMonth} value={formatCurrency(kpis.revenueMonth)} icon={TrendingUp} tone="success" />
-          <StatCard label={dict.dashboard.outstandingPayments} value={formatCurrency(kpis.outstanding)} icon={AlertCircle} tone="warning" />
+          <StatCard label={dict.dashboard.revenueToday} value={fmtCurrency(kpis.revenueToday)} icon={Banknote} tone="success" />
+          <StatCard label={dict.dashboard.revenueThisMonth} value={fmtCurrency(kpis.revenueMonth)} icon={TrendingUp} tone="success" />
+          <StatCard label={dict.dashboard.outstandingPayments} value={fmtCurrency(kpis.outstanding)} icon={AlertCircle} tone="warning" />
           <StatCard label={dict.dashboard.occupancyRate} value={`${kpis.occupancyRate}%`} icon={Percent} tone="primary" />
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Today&apos;s arrivals</CardTitle>
+            <CardTitle>{dict.dashboard.todaysArrivals}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.arrivals.length === 0 ? (
-              <EmptyState title={dict.dashboard.noArrivals} description="Guests checking in today will appear here." />
+              <EmptyState title={dict.dashboard.noArrivals} description={dict.dashboard.noArrivalsDesc} />
             ) : (
               <Table>
                 <THead>
                   <TR>
-                    <TH>Guest</TH>
-                    <TH>Type</TH>
-                    <TH>Room / Event</TH>
-                    <TH>Check-in</TH>
-                    <TH>Payment</TH>
-                    <TH>Status</TH>
+                    <TH>{dict.dashboard.tableGuest}</TH>
+                    <TH>{dict.dashboard.tableType}</TH>
+                    <TH>{dict.dashboard.tableRoomOrEvent}</TH>
+                    <TH>{dict.dashboard.tableCheckIn}</TH>
+                    <TH>{dict.dashboard.tablePayment}</TH>
+                    <TH>{dict.dashboard.tableStatus}</TH>
                   </TR>
                 </THead>
                 <TBody>
@@ -93,11 +89,11 @@ export default async function DashboardPage() {
                           {r.guest.firstName} {r.guest.lastName}
                         </Link>
                       </TD>
-                      <TD>Stay</TD>
+                      <TD>{dict.reservations.stay}</TD>
                       <TD>{r.room?.name ?? "—"}</TD>
-                      <TD>{formatDate(r.checkIn!, { weekday: undefined })}</TD>
-                      <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel[r.paymentStatus]}</Badge></TD>
-                      <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel[r.status]}</Badge></TD>
+                      <TD>{fmtDate(r.checkIn!, { weekday: undefined })}</TD>
+                      <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel(dict, r.paymentStatus)}</Badge></TD>
+                      <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel(dict, r.status)}</Badge></TD>
                     </TR>
                   ))}
                 </TBody>
@@ -108,20 +104,20 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Today&apos;s departures</CardTitle>
+            <CardTitle>{dict.dashboard.todaysDepartures}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.departures.length === 0 ? (
-              <EmptyState title="No departures today" description="Guests checking out today will appear here." />
+              <EmptyState title={dict.dashboard.noDepartures} description={dict.dashboard.noDeparturesDesc} />
             ) : (
               <Table>
                 <THead>
                   <TR>
-                    <TH>Guest</TH>
-                    <TH>Room</TH>
-                    <TH>Check-out</TH>
-                    <TH>Payment</TH>
-                    <TH>Status</TH>
+                    <TH>{dict.dashboard.tableGuest}</TH>
+                    <TH>{dict.dashboard.tableRoom}</TH>
+                    <TH>{dict.dashboard.tableCheckOut}</TH>
+                    <TH>{dict.dashboard.tablePayment}</TH>
+                    <TH>{dict.dashboard.tableStatus}</TH>
                   </TR>
                 </THead>
                 <TBody>
@@ -133,9 +129,9 @@ export default async function DashboardPage() {
                         </Link>
                       </TD>
                       <TD>{r.room?.name ?? "—"}</TD>
-                      <TD>{formatDate(r.checkOut!)}</TD>
-                      <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel[r.paymentStatus]}</Badge></TD>
-                      <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel[r.status]}</Badge></TD>
+                      <TD>{fmtDate(r.checkOut!)}</TD>
+                      <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel(dict, r.paymentStatus)}</Badge></TD>
+                      <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel(dict, r.status)}</Badge></TD>
                     </TR>
                   ))}
                 </TBody>
@@ -146,21 +142,21 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Today&apos;s events</CardTitle>
+            <CardTitle>{dict.dashboard.todaysEvents}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.eventsToday.length === 0 ? (
-              <EmptyState icon={PartyPopper} title="No events today" description="Weddings, henna nights and other events scheduled for today will appear here." />
+              <EmptyState icon={PartyPopper} title={dict.dashboard.noEventsToday} description={dict.dashboard.noEventsTodayDesc} />
             ) : (
               <Table>
                 <THead>
                   <TR>
-                    <TH>Event</TH>
-                    <TH>Client</TH>
-                    <TH>Time</TH>
-                    <TH>Guests</TH>
-                    <TH>Total</TH>
-                    <TH>Payment</TH>
+                    <TH>{dict.dashboard.tableEvent}</TH>
+                    <TH>{dict.dashboard.tableClient}</TH>
+                    <TH>{dict.dashboard.tableTime}</TH>
+                    <TH>{dict.dashboard.tableGuests}</TH>
+                    <TH>{dict.dashboard.tableTotal}</TH>
+                    <TH>{dict.dashboard.tablePayment}</TH>
                   </TR>
                 </THead>
                 <TBody>
@@ -168,14 +164,14 @@ export default async function DashboardPage() {
                     <TR key={r.id}>
                       <TD>
                         <Link href={`/reservations/${r.id}`} className="font-medium hover:text-primary">
-                          {r.eventName || eventTypeLabel[r.eventType!]}
+                          {r.eventName || eventTypeLabel(dict, r.eventType!)}
                         </Link>
                       </TD>
                       <TD>{r.guest.firstName} {r.guest.lastName}</TD>
                       <TD>{r.eventStart ?? "—"}{r.eventEnd ? ` – ${r.eventEnd}` : ""}</TD>
                       <TD>{r.guestCount ?? "—"}</TD>
-                      <TD>{formatCurrency(r.totalAmount)}</TD>
-                      <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel[r.paymentStatus]}</Badge></TD>
+                      <TD>{fmtCurrency(r.totalAmount)}</TD>
+                      <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel(dict, r.paymentStatus)}</Badge></TD>
                     </TR>
                   ))}
                 </TBody>
@@ -186,28 +182,28 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent reservations</CardTitle>
+            <CardTitle>{dict.dashboard.recentReservations}</CardTitle>
             <Button variant="link" asChild>
-              <Link href="/reservations">View all</Link>
+              <Link href="/reservations">{dict.common.viewAll}</Link>
             </Button>
           </CardHeader>
           <CardContent>
             {data.recentReservations.length === 0 ? (
               <EmptyState
-                title="No reservations yet"
-                description="Create your first reservation to start managing Dar Henani."
-                action={<Button asChild><Link href="/reservations?create=1">+ Create Reservation</Link></Button>}
+                title={dict.dashboard.noReservationsYet}
+                description={dict.dashboard.noReservationsYetDesc}
+                action={<Button asChild><Link href="/reservations?create=1">{dict.dashboard.createReservation}</Link></Button>}
               />
             ) : (
               <Table>
                 <THead>
                   <TR>
-                    <TH>ID</TH>
-                    <TH>Guest</TH>
-                    <TH>Type</TH>
-                    <TH>Date</TH>
-                    <TH>Total</TH>
-                    <TH>Status</TH>
+                    <TH>{dict.dashboard.tableId}</TH>
+                    <TH>{dict.dashboard.tableGuest}</TH>
+                    <TH>{dict.dashboard.tableType}</TH>
+                    <TH>{dict.dashboard.tableDate}</TH>
+                    <TH>{dict.dashboard.tableTotal}</TH>
+                    <TH>{dict.dashboard.tableStatus}</TH>
                   </TR>
                 </THead>
                 <TBody>
@@ -219,10 +215,10 @@ export default async function DashboardPage() {
                           {r.guest.firstName} {r.guest.lastName}
                         </Link>
                       </TD>
-                      <TD>{r.type === "STAY" ? "Stay" : "Event"}</TD>
-                      <TD>{formatDate(r.type === "STAY" ? r.checkIn! : r.eventDate!)}</TD>
-                      <TD>{formatCurrency(r.totalAmount)}</TD>
-                      <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel[r.status]}</Badge></TD>
+                      <TD>{r.type === "STAY" ? dict.reservations.stay : dict.reservations.event}</TD>
+                      <TD>{fmtDate(r.type === "STAY" ? r.checkIn! : r.eventDate!)}</TD>
+                      <TD>{fmtCurrency(r.totalAmount)}</TD>
+                      <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel(dict, r.status)}</Badge></TD>
                     </TR>
                   ))}
                 </TBody>

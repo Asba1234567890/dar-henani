@@ -1,13 +1,5 @@
 import type { PaymentStatus, ReservationStatus, RoomStatus, BookingSource, EventType, PaymentMethod } from "@prisma/client";
-
-export const reservationStatusLabel: Record<ReservationStatus, string> = {
-  CONFIRMED: "Confirmed",
-  PENDING: "Pending",
-  CHECKED_IN: "Checked-in",
-  CHECKED_OUT: "Checked-out",
-  CANCELLED: "Cancelled",
-  NO_SHOW: "No-show",
-};
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 export const reservationStatusVariant: Record<ReservationStatus, "success" | "warning" | "info" | "neutral" | "error"> = {
   CONFIRMED: "info",
@@ -18,24 +10,10 @@ export const reservationStatusVariant: Record<ReservationStatus, "success" | "wa
   NO_SHOW: "error",
 };
 
-export const paymentStatusLabel: Record<PaymentStatus, string> = {
-  UNPAID: "Unpaid",
-  PARTIALLY_PAID: "Partially paid",
-  PAID: "Paid",
-};
-
 export const paymentStatusVariant: Record<PaymentStatus, "success" | "warning" | "error"> = {
   UNPAID: "error",
   PARTIALLY_PAID: "warning",
   PAID: "success",
-};
-
-export const roomStatusLabel: Record<RoomStatus, string> = {
-  AVAILABLE: "Available",
-  OCCUPIED: "Occupied",
-  CLEANING: "Cleaning",
-  MAINTENANCE: "Maintenance",
-  OUT_OF_SERVICE: "Out of service",
 };
 
 export const roomStatusVariant: Record<RoomStatus, "success" | "info" | "warning" | "error" | "neutral"> = {
@@ -46,34 +24,29 @@ export const roomStatusVariant: Record<RoomStatus, "success" | "info" | "warning
   OUT_OF_SERVICE: "neutral",
 };
 
-export const bookingSourceLabel: Record<BookingSource, string> = {
-  BOOKING_COM: "Booking.com",
-  AIRBNB: "Airbnb",
-  PHONE: "Phone",
-  WHATSAPP: "WhatsApp",
-  DIRECT: "Direct",
-  WALK_IN: "Walk-in",
-  OTHER: "Other",
-};
+export function reservationStatusLabel(dict: Dictionary, status: ReservationStatus) {
+  return dict.enums.reservationStatus[status];
+}
 
-export const eventTypeLabel: Record<EventType, string> = {
-  WEDDING: "Wedding",
-  HENNA: "Henna",
-  BIRTHDAY: "Birthday",
-  ENGAGEMENT: "Engagement",
-  CORPORATE: "Corporate",
-  PRIVATE_EVENT: "Private event",
-  DINNER: "Dinner",
-  PHOTOSHOOT: "Photoshoot",
-  OTHER: "Other",
-};
+export function paymentStatusLabel(dict: Dictionary, status: PaymentStatus) {
+  return dict.enums.paymentStatus[status];
+}
 
-export const paymentMethodLabel: Record<PaymentMethod, string> = {
-  CASH: "Cash",
-  CARD: "Card",
-  BANK_TRANSFER: "Bank transfer",
-  OTHER: "Other",
-};
+export function roomStatusLabel(dict: Dictionary, status: RoomStatus) {
+  return dict.enums.roomStatus[status];
+}
+
+export function bookingSourceLabel(dict: Dictionary, source: BookingSource) {
+  return dict.enums.bookingSource[source];
+}
+
+export function eventTypeLabel(dict: Dictionary, type: EventType) {
+  return dict.enums.eventType[type];
+}
+
+export function paymentMethodLabel(dict: Dictionary, method: PaymentMethod) {
+  return dict.enums.paymentMethod[method];
+}
 
 export function computePaymentStatus(totalAmount: number, amountPaid: number): PaymentStatus {
   if (amountPaid <= 0) return "UNPAID";

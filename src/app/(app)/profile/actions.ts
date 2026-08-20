@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { signSession } from "@/lib/auth/session";
 import { setSessionCookie } from "@/lib/auth/cookies";
 import { logAudit } from "@/lib/audit";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -17,20 +18,21 @@ const changePasswordSchema = z.object({
 export async function changeOwnPassword(raw: z.infer<typeof changePasswordSchema>) {
   const auth = await authorize();
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   let input: z.infer<typeof changePasswordSchema>;
   try {
     input = changePasswordSchema.parse(raw);
-  } catch (err) {
-    return { ok: false as const, error: err instanceof z.ZodError ? err.issues[0].message : "Invalid input." };
+  } catch {
+    return { ok: false as const, error: dict.profile.passwordTooShort };
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { id: auth.user.id } });
-    if (!user) return { ok: false as const, error: "User not found." };
+    if (!user) return { ok: false as const, error: dict.settings.userNotFound };
 
     const valid = await verifyPassword(input.currentPassword, user.passwordHash);
-    if (!valid) return { ok: false as const, error: "Current password is incorrect." };
+    if (!valid) return { ok: false as const, error: dict.profile.currentPasswordIncorrect };
 
     const passwordHash = await hashPassword(input.newPassword);
     await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
@@ -38,7 +40,7 @@ export async function changeOwnPassword(raw: z.infer<typeof changePasswordSchema
     return { ok: true as const };
   } catch (err) {
     console.error("changeOwnPassword failed:", err);
-    return { ok: false as const, error: "Could not change password. Please try again." };
+    return { ok: false as const, error: dict.profile.changePasswordFailed };
   }
 }
 
@@ -47,9 +49,10 @@ const languageSchema = z.enum(["EN", "FR"]);
 export async function updateOwnLanguage(raw: string) {
   const auth = await authorize();
   if (!auth.ok) return auth;
+  const dict = getDictionary(auth.user.language);
 
   const parsed = languageSchema.safeParse(raw);
-  if (!parsed.success) return { ok: false as const, error: "Invalid language." };
+  if (!parsed.success) return { ok: false as const, error: dict.profile.invalidLanguage };
 
   try {
     await prisma.user.update({ where: { id: auth.user.id }, data: { language: parsed.data } });
@@ -66,6 +69,6 @@ export async function updateOwnLanguage(raw: string) {
     return { ok: true as const };
   } catch (err) {
     console.error("updateOwnLanguage failed:", err);
-    return { ok: false as const, error: "Could not update language. Please try again." };
+    return { ok: false as const, error: dict.profile.updateLanguageFailed };
   }
 }

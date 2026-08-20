@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { createUser, updateUserRole, updateUserLanguage, toggleUserActive, resetUserPassword } from "@/app/(app)/settings/actions";
+import { useI18n } from "@/lib/i18n/provider";
 import type { UserRole, Language } from "@prisma/client";
 
 type UserRow = {
@@ -28,6 +29,7 @@ type UserRow = {
 
 export function UsersManager({ users, currentUserId }: { users: UserRow[]; currentUserId: string }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
@@ -45,7 +47,7 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
         toast.error(result.error);
         return;
       }
-      toast.success("User created");
+      toast.success(t("settings.userCreated"));
       setAddOpen(false);
       setName("");
       setUsername("");
@@ -95,21 +97,21 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Users &amp; permissions</CardTitle>
-        <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="h-3.5 w-3.5" /> Add user</Button>
+        <CardTitle>{t("settings.usersAndPermissions")}</CardTitle>
+        <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="h-3.5 w-3.5" /> {t("settings.addUser")}</Button>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <THead>
-              <TR><TH>Name</TH><TH>Username</TH><TH>Role</TH><TH>Language</TH><TH>Status</TH><TH>Actions</TH></TR>
+              <TR><TH>{t("settings.name")}</TH><TH>{t("settings.username")}</TH><TH>{t("settings.role")}</TH><TH>{t("settings.language")}</TH><TH>{t("settings.status")}</TH><TH>{t("common.actions")}</TH></TR>
             </THead>
             <TBody>
               {users.map((u) => (
                 <TR key={u.id}>
                   <TD className="font-medium">
                     {u.name}
-                    {u.id === currentUserId && <Badge variant="info" className="ml-2">You</Badge>}
+                    {u.id === currentUserId && <Badge variant="info" className="ml-2">{t("common.you")}</Badge>}
                   </TD>
                   <TD className="text-text-secondary">{u.username}</TD>
                   <TD>
@@ -119,8 +121,8 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
                       onChange={(e) => changeRole(u.id, e.target.value as UserRole)}
                       disabled={pending || u.id === currentUserId}
                     >
-                      <option value="ADMIN">Admin</option>
-                      <option value="USER">Normal user</option>
+                      <option value="ADMIN">{t("settings.roleAdmin")}</option>
+                      <option value="USER">{t("settings.roleUser")}</option>
                     </Select>
                   </TD>
                   <TD>
@@ -130,14 +132,14 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
                       onChange={(e) => changeLanguage(u.id, e.target.value as Language)}
                       disabled={pending}
                     >
-                      <option value="EN">English</option>
-                      <option value="FR">Français</option>
+                      <option value="EN">{t("common.english")}</option>
+                      <option value="FR">{t("common.french")}</option>
                     </Select>
                   </TD>
                   <TD><Switch checked={u.active} onCheckedChange={(v) => toggleActive(u.id, v)} disabled={pending || u.id === currentUserId} /></TD>
                   <TD>
                     <Button size="sm" variant="outline" onClick={() => handleResetPassword(u.id)} disabled={pending}>
-                      <KeyRound className="h-3.5 w-3.5" /> Reset password
+                      <KeyRound className="h-3.5 w-3.5" /> {t("settings.resetPassword")}
                     </Button>
                   </TD>
                 </TR>
@@ -149,43 +151,43 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent size="sm">
-          <DialogHeader><DialogTitle>Add user</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("settings.addUser")}</DialogTitle></DialogHeader>
           <div className="space-y-4 px-6 py-2">
             <FieldGroup>
-              <Label>Name</Label>
+              <Label>{t("settings.name")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </FieldGroup>
             <FieldGroup>
-              <Label>Username</Label>
+              <Label>{t("settings.username")}</Label>
               <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. fatima" />
             </FieldGroup>
             <FieldGroup>
-              <Label>Email (optional)</Label>
+              <Label>{t("settings.email")} ({t("common.optional")})</Label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </FieldGroup>
             <FieldGroup>
-              <Label>Role</Label>
+              <Label>{t("settings.role")}</Label>
               <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
-                <option value="ADMIN">Admin</option>
-                <option value="USER">Normal user</option>
+                <option value="ADMIN">{t("settings.roleAdmin")}</option>
+                <option value="USER">{t("settings.roleUser")}</option>
               </Select>
             </FieldGroup>
             <FieldGroup>
-              <Label>Language</Label>
+              <Label>{t("settings.language")}</Label>
               <Select value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
-                <option value="EN">English</option>
-                <option value="FR">Français</option>
+                <option value="EN">{t("common.english")}</option>
+                <option value="FR">{t("common.french")}</option>
               </Select>
             </FieldGroup>
             <FieldGroup>
-              <Label>Temporary password</Label>
-              <Input value={temporaryPassword} onChange={(e) => setTemporaryPassword(e.target.value)} placeholder="At least 8 characters" />
+              <Label>{t("settings.temporaryPassword")}</Label>
+              <Input value={temporaryPassword} onChange={(e) => setTemporaryPassword(e.target.value)} placeholder={t("settings.passwordHint")} />
             </FieldGroup>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submitAdd} disabled={pending || !name || !username || temporaryPassword.length < 8}>
-              {pending && <Loader2 className="h-4 w-4 animate-spin" />} Add user
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />} {t("settings.addUser")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -193,15 +195,13 @@ export function UsersManager({ users, currentUserId }: { users: UserRow[]; curre
 
       <Dialog open={!!resetResult} onOpenChange={(open) => !open && setResetResult(null)}>
         <DialogContent size="sm">
-          <DialogHeader><DialogTitle>Temporary password</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("settings.temporaryPasswordDialogTitle")}</DialogTitle></DialogHeader>
           <div className="space-y-3 px-6 py-2 text-sm">
-            <p className="text-text-secondary">
-              Share this password with the user through a secure channel. It will not be shown again — the user should change it after signing in.
-            </p>
+            <p className="text-text-secondary">{t("settings.temporaryPasswordDialogDesc")}</p>
             <p className="rounded-[var(--radius-sm)] bg-muted px-3 py-2 font-mono text-base tracking-wide">{resetResult?.password}</p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setResetResult(null)}>Done</Button>
+            <Button onClick={() => setResetResult(null)}>{t("common.done")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

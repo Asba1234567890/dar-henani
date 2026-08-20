@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function RoomGalleryDialog({
   open,
@@ -17,6 +18,7 @@ export function RoomGalleryDialog({
   roomName: string;
 }) {
   const [index, setIndex] = useState(0);
+  const { t } = useI18n();
 
   return (
     <Dialog
@@ -39,14 +41,14 @@ export function RoomGalleryDialog({
                 <button
                   onClick={() => setIndex((i) => (i - 1 + photos.length) % photos.length)}
                   className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
-                  aria-label="Previous photo"
+                  aria-label={t("rooms.previousPhoto")}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setIndex((i) => (i + 1) % photos.length)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
-                  aria-label="Next photo"
+                  aria-label={t("rooms.nextPhoto")}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -60,7 +62,7 @@ export function RoomGalleryDialog({
                   key={i}
                   onClick={() => setIndex(i)}
                   className={cn("h-1.5 rounded-full transition-all", i === index ? "w-5 bg-primary" : "w-1.5 bg-border-strong")}
-                  aria-label={`Go to photo ${i + 1}`}
+                  aria-label={t("rooms.goToPhoto", { n: i + 1 })}
                 />
               ))}
             </div>

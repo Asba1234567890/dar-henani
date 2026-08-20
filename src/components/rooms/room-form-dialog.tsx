@@ -10,6 +10,7 @@ import { Input, Textarea, Select, Label, FieldGroup } from "@/components/ui/inpu
 import { cn } from "@/lib/utils";
 import { fileToResizedDataUrl } from "@/lib/image";
 import { createRoom, updateRoom } from "@/app/(app)/rooms/actions";
+import { useI18n } from "@/lib/i18n/provider";
 
 type RoomType = { id: string; name: string };
 type Amenity = { id: string; name: string };
@@ -42,6 +43,7 @@ export function RoomFormDialog({
   initial?: RoomFormValue;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const [value, setValue] = useState<RoomFormValue>(initial ?? empty);
   const [prevOpen, setPrevOpen] = useState(open);
@@ -61,7 +63,7 @@ export function RoomFormDialog({
     if (!files || files.length === 0) return;
     const remaining = MAX_PHOTOS - value.photos.length;
     if (remaining <= 0) {
-      toast.error(`You can add up to ${MAX_PHOTOS} photos per room.`);
+      toast.error(t("rooms.maxPhotosError", { max: MAX_PHOTOS }));
       return;
     }
     setUploading(true);
@@ -70,7 +72,7 @@ export function RoomFormDialog({
       const dataUrls = await Promise.all(selected.map((f) => fileToResizedDataUrl(f)));
       setValue((v) => ({ ...v, photos: [...v.photos, ...dataUrls] }));
     } catch {
-      toast.error("Could not read one of the selected images.");
+      toast.error(t("rooms.readImageError"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -97,7 +99,7 @@ export function RoomFormDialog({
         toast.error(result.error);
         return;
       }
-      toast.success(value.id ? "Room updated" : "Room added");
+      toast.success(value.id ? t("rooms.roomUpdated") : t("rooms.roomAdded"));
       onOpenChange(false);
       router.refresh();
     });
@@ -107,36 +109,36 @@ export function RoomFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>{value.id ? "Edit room" : "Add room"}</DialogTitle>
+          <DialogTitle>{value.id ? t("rooms.editRoom") : t("rooms.addRoom")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-6 py-2">
           <div className="grid grid-cols-2 gap-4">
             <FieldGroup>
-              <Label>Room name / number</Label>
+              <Label>{t("rooms.roomNameNumber")}</Label>
               <Input value={value.name} onChange={(e) => setValue((v) => ({ ...v, name: e.target.value }))} />
             </FieldGroup>
             <FieldGroup>
-              <Label>Room type</Label>
+              <Label>{t("rooms.roomType")}</Label>
               <Select value={value.roomTypeId} onChange={(e) => setValue((v) => ({ ...v, roomTypeId: e.target.value }))}>
                 <option value="">—</option>
-                {roomTypes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {roomTypes.map((rt) => <option key={rt.id} value={rt.id}>{rt.name}</option>)}
               </Select>
             </FieldGroup>
             <FieldGroup>
-              <Label>Capacity</Label>
+              <Label>{t("rooms.capacity")}</Label>
               <Input type="number" min={1} value={value.capacity} onChange={(e) => setValue((v) => ({ ...v, capacity: Number(e.target.value) }))} />
             </FieldGroup>
             <FieldGroup>
-              <Label>Price / night</Label>
+              <Label>{t("rooms.pricePerNight")}</Label>
               <Input type="number" min={0} value={value.pricePerNight} onChange={(e) => setValue((v) => ({ ...v, pricePerNight: Number(e.target.value) }))} />
             </FieldGroup>
           </div>
           <FieldGroup>
-            <Label>Description</Label>
+            <Label>{t("rooms.description")}</Label>
             <Textarea rows={2} value={value.description} onChange={(e) => setValue((v) => ({ ...v, description: e.target.value }))} />
           </FieldGroup>
           <div>
-            <Label>Amenities</Label>
+            <Label>{t("rooms.amenities")}</Label>
             <div className="flex flex-wrap gap-2">
               {amenities.map((a) => (
                 <button
@@ -154,7 +156,7 @@ export function RoomFormDialog({
             </div>
           </div>
           <div>
-            <Label>Photos</Label>
+            <Label>{t("rooms.photos")}</Label>
             <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
               {value.photos.map((src, i) => (
                 <div key={i} className="group relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border border-border">
@@ -165,7 +167,7 @@ export function RoomFormDialog({
                     type="button"
                     onClick={() => removePhoto(i)}
                     className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    aria-label="Remove photo"
+                    aria-label={t("rooms.removePhoto")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -179,7 +181,7 @@ export function RoomFormDialog({
                   className="flex aspect-square flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border border-dashed border-border-strong text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
                 >
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                  <span className="text-[10px]">Add photo</span>
+                  <span className="text-[10px]">{t("rooms.addPhoto")}</span>
                 </button>
               )}
             </div>
@@ -191,14 +193,14 @@ export function RoomFormDialog({
               className="hidden"
               onChange={(e) => handleFiles(e.target.files)}
             />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">Up to {MAX_PHOTOS} photos, resized automatically.</p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">{t("rooms.photosHint", { max: MAX_PHOTOS })}</p>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           <Button onClick={handleSubmit} disabled={pending || !value.name || value.pricePerNight <= 0}>
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {value.id ? "Save changes" : "Add room"}
+            {value.id ? t("common.saveChanges") : t("rooms.addRoom")}
           </Button>
         </DialogFooter>
       </DialogContent>

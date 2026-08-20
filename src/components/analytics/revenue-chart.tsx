@@ -2,8 +2,10 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function RevenueChart({ data }: { data: { label: string; value: number }[] }) {
+  const { t } = useI18n();
   return (
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
@@ -35,7 +37,7 @@ export function RevenueChart({ data }: { data: { label: string; value: number }[
             borderRadius: 8,
             fontSize: 12,
           }}
-          formatter={(value) => [formatCurrency(Number(value)), "Revenue"]}
+          formatter={(value) => [formatCurrency(Number(value)), t("common.revenue")]}
         />
         <Area type="monotone" dataKey="value" stroke="var(--color-primary)" strokeWidth={2} fill="url(#revenueFill)" />
       </AreaChart>

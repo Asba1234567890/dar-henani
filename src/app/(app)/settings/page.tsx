@@ -13,11 +13,13 @@ import { SystemSettingsForm } from "@/components/settings/system-settings-form";
 import { NotificationSettingsForm } from "@/components/settings/notification-settings-form";
 import { addRoomType, deleteRoomType, addAmenity, deleteAmenity } from "@/app/(app)/settings/actions";
 import { requireAdminPage } from "@/lib/auth/guards";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  await requireAdminPage();
+  const user = await requireAdminPage();
+  const dict = getDictionary(user.language);
 
   const [settings, roomTypes, amenities] = await Promise.all([
     prisma.propertySettings.upsert({ where: { id: "default" }, create: { id: "default" }, update: {} }),
@@ -27,16 +29,16 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Topbar title="Settings" />
+      <Topbar title={dict.settings.title} />
       <PageContainer>
         <Tabs defaultValue="property">
           <TabsList className="mb-6 flex-wrap">
-            <TabsTrigger value="property">Property</TabsTrigger>
-            <TabsTrigger value="reservations">Reservations</TabsTrigger>
-            <TabsTrigger value="rooms">Rooms</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
+            <TabsTrigger value="property">{dict.settings.property}</TabsTrigger>
+            <TabsTrigger value="reservations">{dict.settings.reservationsTab}</TabsTrigger>
+            <TabsTrigger value="rooms">{dict.settings.roomsTab}</TabsTrigger>
+            <TabsTrigger value="users">{dict.settings.users}</TabsTrigger>
+            <TabsTrigger value="notifications">{dict.settings.notifications}</TabsTrigger>
+            <TabsTrigger value="system">{dict.settings.system}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="property">
@@ -60,20 +62,18 @@ export default async function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="rooms" className="space-y-6">
-            <TagListManager title="Room types" items={roomTypes} onAdd={addRoomType} onDelete={deleteRoomType} placeholder="e.g. Suite" />
-            <TagListManager title="Amenities" items={amenities} onAdd={addAmenity} onDelete={deleteAmenity} placeholder="e.g. WiFi" />
+            <TagListManager title={dict.settings.roomTypes} items={roomTypes} onAdd={addRoomType} onDelete={deleteRoomType} placeholder={dict.settings.roomTypePlaceholder} />
+            <TagListManager title={dict.rooms.amenities} items={amenities} onAdd={addAmenity} onDelete={deleteAmenity} placeholder={dict.settings.amenityPlaceholder} />
           </TabsContent>
 
           <TabsContent value="users">
             <Card>
-              <CardHeader><CardTitle>Users &amp; permissions</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{dict.settings.usersAndPermissions}</CardTitle></CardHeader>
               <CardContent>
-                <p className="mb-4 text-sm text-text-secondary">
-                  Manage administrator and staff accounts, roles, languages and passwords.
-                </p>
+                <p className="mb-4 text-sm text-text-secondary">{dict.settings.manageUsersDesc}</p>
                 <Button asChild>
                   <Link href="/settings/users">
-                    Open user management <ArrowUpRight className="h-4 w-4" />
+                    {dict.settings.openUserManagement} <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>

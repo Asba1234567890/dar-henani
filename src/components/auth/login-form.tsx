@@ -5,8 +5,15 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldGroup } from "@/components/ui/input";
 import { login } from "@/app/(auth)/login/actions";
+import { useI18n } from "@/lib/i18n/provider";
+
+export function LoginBrandTagline() {
+  const { t } = useI18n();
+  return <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("nav.tagline")}</p>;
+}
 
 export function LoginForm() {
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +34,7 @@ export function LoginForm() {
         // Next.js redirect() throws an internal signal on success — let it propagate untouched.
         const digest = (err as { digest?: string })?.digest;
         if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) throw err;
-        setError("Something went wrong. Please try again.");
+        setError(t("common.somethingWentWrong"));
       }
     });
   }
@@ -35,7 +42,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <FieldGroup>
-        <Label htmlFor="identifier">Username or email</Label>
+        <Label htmlFor="identifier">{t("login.identifier")}</Label>
         <Input
           id="identifier"
           name="identifier"
@@ -47,7 +54,7 @@ export function LoginForm() {
         />
       </FieldGroup>
       <FieldGroup>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("login.password")}</Label>
         <Input
           id="password"
           name="password"
@@ -68,7 +75,7 @@ export function LoginForm() {
 
       <Button type="submit" className="w-full" disabled={pending || !identifier || !password}>
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Sign in
+        {pending ? t("login.signingIn") : t("login.submit")}
       </Button>
     </form>
   );
