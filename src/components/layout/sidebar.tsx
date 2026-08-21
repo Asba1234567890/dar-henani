@@ -43,7 +43,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navItems = useNavItems(session.role);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 h-full flex-col bg-white">
       <div className="flex items-center gap-2.5 px-6 py-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-sm">
           DH
@@ -54,7 +54,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto bg-white px-3">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
@@ -77,7 +77,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="border-t border-border px-4 py-4">
+      <div className="shrink-0 border-t border-border bg-white px-4 py-4">
         <Link
           href="/profile"
           onClick={onNavigate}
@@ -116,7 +116,7 @@ export function Sidebar() {
 
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
-  // Lock background scroll while the mobile sidebar is open so content can't bleed/scroll behind it.
+
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
@@ -127,23 +127,20 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
   }, [open]);
 
   if (!open) return null;
+
   return (
-    <div
-      className="fixed inset-0 z-[100] bg-transparent lg:hidden"
-      style={{ isolation: "isolate" }}
-      role="presentation"
-    >
-      <div
-        className="absolute inset-0 bg-[#2b2420]/50 backdrop-blur-[2px]"
-        style={{ zIndex: 0 }}
+    <div className="fixed inset-0 z-[100] isolate lg:hidden">
+      <button
+        type="button"
+        aria-label={t("common.closeMenu")}
+        className="fixed inset-0 bg-[#2b2420]/50 backdrop-blur-[2px]"
         onClick={onClose}
-        aria-hidden
       />
       <aside
-        className="absolute left-0 top-0 z-[1] flex h-full w-[85vw] max-w-72 flex-col overflow-hidden bg-white shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200"
+        className="fixed inset-y-0 left-0 z-[101] flex h-[100dvh] w-[85vw] max-w-72 flex-col overflow-hidden bg-white shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200"
         style={{
-          backgroundColor: "#ffffff",
           opacity: 1,
+          backgroundColor: "#ffffff",
           isolation: "isolate",
           mixBlendMode: "normal",
           contain: "paint",
