@@ -128,9 +128,17 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[100] lg:hidden">
-      <div className="absolute inset-0 bg-[#2b2420]/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
-      <div className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col bg-surface shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200">
+    <div className="fixed inset-0 z-[100] lg:hidden" style={{ isolation: "isolate" }}>
+      <div
+        className="absolute inset-0 bg-[#2b2420]/50 backdrop-blur-[2px]"
+        style={{ zIndex: 0 }}
+        onClick={onClose}
+        aria-hidden
+      />
+      <div
+        className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200"
+        style={{ zIndex: 1, backgroundColor: "#ffffff", opacity: 1 }}
+      >
         <button
           onClick={onClose}
           aria-label={t("common.closeMenu")}
