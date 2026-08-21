@@ -128,16 +128,23 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[100] lg:hidden" style={{ isolation: "isolate" }}>
+    <div className="fixed inset-0 z-[100] lg:hidden">
       <div
-        className="absolute inset-0 bg-[#2b2420]/50 backdrop-blur-[2px]"
-        style={{ zIndex: 0 }}
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
         aria-hidden
       />
       <div
-        className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200"
-        style={{ zIndex: 1, backgroundColor: "#ffffff", opacity: 1 }}
+        className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col animate-in slide-in-from-left duration-200"
+        style={{
+          zIndex: 10,
+          backgroundColor: "#ffffff",
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+          WebkitBackfaceVisibility: "hidden" as const,
+          backfaceVisibility: "hidden",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+        }}
       >
         <button
           onClick={onClose}
