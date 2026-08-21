@@ -128,16 +128,27 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[100] lg:hidden" style={{ isolation: "isolate" }}>
+    <div
+      className="fixed inset-0 z-[100] bg-transparent lg:hidden"
+      style={{ isolation: "isolate" }}
+      role="presentation"
+    >
       <div
         className="absolute inset-0 bg-[#2b2420]/50 backdrop-blur-[2px]"
         style={{ zIndex: 0 }}
         onClick={onClose}
         aria-hidden
       />
-      <div
-        className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200"
-        style={{ zIndex: 1, backgroundColor: "#ffffff", opacity: 1 }}
+      <aside
+        className="absolute left-0 top-0 z-[1] flex h-full w-[85vw] max-w-72 flex-col overflow-hidden bg-white shadow-[var(--shadow-lg)] animate-in slide-in-from-left duration-200"
+        style={{
+          backgroundColor: "#ffffff",
+          opacity: 1,
+          isolation: "isolate",
+          mixBlendMode: "normal",
+          contain: "paint",
+        }}
+        aria-label="Mobile navigation"
       >
         <button
           onClick={onClose}
@@ -147,7 +158,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
           <X className="h-4 w-4" />
         </button>
         <SidebarContent onNavigate={onClose} />
-      </div>
+      </aside>
     </div>
   );
 }
