@@ -43,8 +43,8 @@ export async function getDashboardData() {
         OR: [{ type: "STAY", checkIn: { gt: dayEnd } }, { type: "EVENT", eventDate: { gt: dayEnd } }],
       },
     }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: dayStart, lte: dayEnd } } }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: monthStart, lte: monthEnd } } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: dayStart, lte: dayEnd }, reservation: { status: { not: "CANCELLED" } } } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: monthStart, lte: monthEnd }, reservation: { status: { not: "CANCELLED" } } } }),
     prisma.reservation.findMany({
       where: { status: { in: [...ACTIVE_STATUSES] } },
       select: { totalAmount: true, payments: { select: { amount: true } } },

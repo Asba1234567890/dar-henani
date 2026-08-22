@@ -41,7 +41,7 @@ export async function getAnalyticsData(range: AnalyticsRange, from?: string, to?
 
   const [payments, reservationsCreated, totalRooms, stayReservationsInRange] = await Promise.all([
     prisma.payment.findMany({
-      where: { createdAt: { gte: start, lte: end } },
+      where: { createdAt: { gte: start, lte: end }, reservation: { status: { not: "CANCELLED" } } },
       include: { reservation: { select: { type: true, source: true } } },
     }),
     prisma.reservation.findMany({

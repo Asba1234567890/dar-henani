@@ -22,21 +22,22 @@ export async function getFinanceData() {
     recentPayments,
     dueReservations,
   ] = await Promise.all([
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: dayStart, lte: dayEnd } } }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: weekStart, lte: weekEnd } } }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: monthStart, lte: monthEnd } } }),
-    prisma.payment.aggregate({ _sum: { amount: true } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: dayStart, lte: dayEnd }, reservation: { status: { not: "CANCELLED" } } } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: weekStart, lte: weekEnd }, reservation: { status: { not: "CANCELLED" } } } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: monthStart, lte: monthEnd }, reservation: { status: { not: "CANCELLED" } } } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { reservation: { status: { not: "CANCELLED" } } } }),
     prisma.reservation.findMany({
       where: { status: { in: ["CONFIRMED", "PENDING", "CHECKED_IN", "CHECKED_OUT"] } },
       select: { totalAmount: true, payments: { select: { amount: true } } },
     }),
     prisma.expense.aggregate({ _sum: { amount: true }, where: { date: { gte: monthStart, lte: monthEnd } } }),
-    prisma.payment.groupBy({ by: ["method"], _sum: { amount: true } }),
+    prisma.payment.groupBy({ by: ["method"], _sum: { amount: true }, where: { reservation: { status: { not: "CANCELLED" } } } }),
     prisma.reservation.findMany({
       where: { status: { not: "CANCELLED" } },
       select: { type: true, payments: { select: { amount: true } } },
     }),
     prisma.payment.findMany({
+      where: { reservation: { status: { not: "CANCELLED" } } },
       orderBy: { createdAt: "desc" },
       take: 10,
       include: { reservation: { include: { guest: true } } },

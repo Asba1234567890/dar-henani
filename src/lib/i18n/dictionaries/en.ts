@@ -265,6 +265,9 @@ const en = {
     print: "Print",
     cancel: "Cancel",
     cancelConfirmDesc: "Cancel this reservation? It will be preserved in history.",
+    cannotPayCancelled: "Cannot add payment to a cancelled reservation.",
+    paymentExceedsRemaining: "Payment amount exceeds the remaining balance.",
+    invalidStatusTransition: "This status change is not allowed.",
   },
   guests: {
     title: "Guests",
@@ -371,6 +374,7 @@ const en = {
     reservations: "Reservations",
     averageBookingValue: "Average booking value",
     averageDailyRate: "Average daily rate (ADR)",
+    revPAR: "RevPAR",
     eventRevenue: "Event revenue",
     noDataForPeriod: "No data for this period.",
     apply: "Apply",

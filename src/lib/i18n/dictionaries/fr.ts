@@ -265,6 +265,9 @@ const fr: Dictionary = {
     print: "Imprimer",
     cancel: "Annuler",
     cancelConfirmDesc: "Annuler cette réservation ? Elle sera conservée dans l'historique.",
+    cannotPayCancelled: "Impossible d'ajouter un paiement à une réservation annulée.",
+    paymentExceedsRemaining: "Le montant du paiement dépasse le solde restant.",
+    invalidStatusTransition: "Ce changement de statut n'est pas autorisé.",
   },
   guests: {
     title: "Clients",
@@ -371,6 +374,7 @@ const fr: Dictionary = {
     reservations: "Réservations",
     averageBookingValue: "Valeur moyenne de réservation",
     averageDailyRate: "Tarif journalier moyen (ADR)",
+    revPAR: "RevPAR",
     eventRevenue: "Revenu des événements",
     noDataForPeriod: "Aucune donnée pour cette période.",
     apply: "Appliquer",

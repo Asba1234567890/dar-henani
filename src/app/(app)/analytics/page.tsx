@@ -27,6 +27,7 @@ export default async function AnalyticsPage({
   const range = (sp.range as AnalyticsRange) || "month";
   const data = await getAnalyticsData(range, sp.from, sp.to);
 
+  const fmtCurrency = (n: number) => formatCurrency(n, undefined, user.language);
   const revenueTypeTotal = data.revenueByType.STAY + data.revenueByType.EVENT;
   const sourceEntries = Object.entries(data.revenueBySource).sort((a, b) => b[1] - a[1]);
   const sourceTotal = sourceEntries.reduce((s, [, v]) => s + v, 0);
@@ -40,14 +41,14 @@ export default async function AnalyticsPage({
         </Suspense>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label={dict.analytics.totalRevenue} value={formatCurrency(data.totalRevenue)} icon={TrendingUp} tone="success" />
+          <StatCard label={dict.analytics.totalRevenue} value={fmtCurrency(data.totalRevenue)} icon={TrendingUp} tone="success" />
           <StatCard label={dict.analytics.reservations} value={data.totalReservations} icon={Receipt} tone="primary" />
-          <StatCard label={dict.analytics.averageBookingValue} value={formatCurrency(data.avgBookingValue)} icon={Gauge} tone="default" />
+          <StatCard label={dict.analytics.averageBookingValue} value={fmtCurrency(data.avgBookingValue)} icon={Gauge} tone="default" />
           <StatCard label={dict.analytics.cancellationRate} value={`${data.cancellationRate.toFixed(1)}%`} icon={Ban} tone="warning" />
           <StatCard label={dict.analytics.occupancyRate} value={`${data.occupancyRate.toFixed(1)}%`} icon={Percent} tone="primary" />
-          <StatCard label={dict.analytics.averageDailyRate} value={formatCurrency(data.adr)} icon={BedDouble} tone="accent" />
-          <StatCard label="RevPAR" value={formatCurrency(data.revPAR)} icon={BedDouble} tone="accent" />
-          <StatCard label={dict.analytics.eventRevenue} value={formatCurrency(data.revenueByType.EVENT)} icon={TrendingUp} tone="default" />
+          <StatCard label={dict.analytics.averageDailyRate} value={fmtCurrency(data.adr)} icon={BedDouble} tone="accent" />
+          <StatCard label={dict.analytics.revPAR} value={fmtCurrency(data.revPAR)} icon={BedDouble} tone="accent" />
+          <StatCard label={dict.analytics.eventRevenue} value={fmtCurrency(data.revenueByType.EVENT)} icon={TrendingUp} tone="default" />
         </div>
 
         <Card>
@@ -61,8 +62,8 @@ export default async function AnalyticsPage({
           <Card>
             <CardHeader><CardTitle>{dict.analytics.revenueByType}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <BreakdownBar label={`${dict.finance.accommodation} — ${formatCurrency(data.revenueByType.STAY)}`} value={data.revenueByType.STAY} total={revenueTypeTotal} color="var(--color-primary)" />
-              <BreakdownBar label={`${dict.finance.events} — ${formatCurrency(data.revenueByType.EVENT)}`} value={data.revenueByType.EVENT} total={revenueTypeTotal} color="var(--color-accent)" />
+              <BreakdownBar label={`${dict.finance.accommodation} — ${fmtCurrency(data.revenueByType.STAY)}`} value={data.revenueByType.STAY} total={revenueTypeTotal} color="var(--color-primary)" />
+              <BreakdownBar label={`${dict.finance.events} — ${fmtCurrency(data.revenueByType.EVENT)}`} value={data.revenueByType.EVENT} total={revenueTypeTotal} color="var(--color-accent)" />
             </CardContent>
           </Card>
           <Card>
@@ -74,7 +75,7 @@ export default async function AnalyticsPage({
                 sourceEntries.map(([source, amount]) => (
                   <BreakdownBar
                     key={source}
-                    label={`${bookingSourceLabel(dict, source as BookingSource)} — ${formatCurrency(amount)}`}
+                    label={`${bookingSourceLabel(dict, source as BookingSource)} — ${fmtCurrency(amount)}`}
                     value={amount}
                     total={sourceTotal}
                     color="var(--color-primary)"

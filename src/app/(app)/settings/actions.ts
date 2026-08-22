@@ -7,6 +7,7 @@ import { authorize } from "@/lib/auth/guards";
 import { hashPassword } from "@/lib/auth/password";
 import { logAudit } from "@/lib/audit";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { randomInt } from "crypto";
 
 const propertySchema = z.object({
   propertyName: z.string().min(1),
@@ -227,7 +228,7 @@ export async function toggleUserActive(id: string, active: boolean) {
 function generateTempPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#%";
   let pw = "";
-  for (let i = 0; i < 14; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 14; i++) pw += chars[randomInt(chars.length)];
   return pw;
 }
 

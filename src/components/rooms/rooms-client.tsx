@@ -45,7 +45,7 @@ export function RoomsClient({
   canManage: boolean;
 }) {
   const router = useRouter();
-  const { t, dict } = useI18n();
+  const { t, dict, language } = useI18n();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<RoomFormValue | undefined>(undefined);
   const [galleryRoom, setGalleryRoom] = useState<RoomCard | null>(null);
@@ -131,7 +131,7 @@ export function RoomsClient({
               <div className="flex-1 space-y-3 px-5 pb-3 text-sm">
                 <div className="flex items-center gap-4 text-text-secondary">
                   <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {room.capacity} {t("rooms.guestsCount")}</span>
-                  <span className="font-medium text-primary">{formatCurrency(room.pricePerNight)}{t("rooms.perNight")}</span>
+                  <span className="font-medium text-primary">{formatCurrency(room.pricePerNight, undefined, language)}{t("rooms.perNight")}</span>
                 </div>
                 {room.description && <p className="line-clamp-2 text-text-secondary">{room.description}</p>}
                 {room.amenities.length > 0 && (
@@ -147,7 +147,7 @@ export function RoomsClient({
                     <Link href={`/reservations/${room.currentReservation.id}`} className="font-medium hover:underline">
                       {room.currentReservation.guest.firstName} {room.currentReservation.guest.lastName}
                     </Link>{" "}
-                    {t("rooms.until")} {new Date(room.currentReservation.checkOut!).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                    {t("rooms.until")} {new Date(room.currentReservation.checkOut!).toLocaleDateString(language === "FR" ? "fr-FR" : "en-GB", { day: "2-digit", month: "short" })}
                   </div>
                 )}
               </div>

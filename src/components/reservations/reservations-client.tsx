@@ -25,7 +25,9 @@ type Filter = (typeof FILTERS)[number];
 export function ReservationsClient({ reservations }: { reservations: Derived[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { t, dict } = useI18n();
+  const { t, dict, language } = useI18n();
+  const fmtDate = (d: Date | string, opts?: Intl.DateTimeFormatOptions) => formatDate(d, opts, language);
+  const fmtCurrency = (n: number) => formatCurrency(n, undefined, language);
   const [filter, setFilter] = useState<Filter>("All");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -153,11 +155,11 @@ export function ReservationsClient({ reservations }: { reservations: Derived[] }
                         {r.guest.firstName} {r.guest.lastName}
                       </Link>
                     </TD>
-                    <TD>{formatDate(r.type === "STAY" ? r.checkIn! : r.eventDate!)}</TD>
+                    <TD>{fmtDate(r.type === "STAY" ? r.checkIn! : r.eventDate!)}</TD>
                     <TD>{r.type === "STAY" ? r.room?.name ?? "—" : r.eventSpace?.name ?? "—"}</TD>
-                    <TD>{formatCurrency(r.totalAmount)}</TD>
-                    <TD className="text-success">{formatCurrency(r.amountPaid)}</TD>
-                    <TD className={cn(r.remainingAmount > 0 && "text-error font-medium")}>{formatCurrency(r.remainingAmount)}</TD>
+                    <TD>{fmtCurrency(r.totalAmount)}</TD>
+                    <TD className="text-success">{fmtCurrency(r.amountPaid)}</TD>
+                    <TD className={cn(r.remainingAmount > 0 && "text-error font-medium")}>{fmtCurrency(r.remainingAmount)}</TD>
                     <TD><Badge variant={paymentStatusVariant[r.paymentStatus]}>{paymentStatusLabel(dict, r.paymentStatus)}</Badge></TD>
                     <TD><Badge variant={reservationStatusVariant[r.status]}>{reservationStatusLabel(dict, r.status)}</Badge></TD>
                   </TR>

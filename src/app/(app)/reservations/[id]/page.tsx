@@ -44,6 +44,8 @@ export default async function ReservationDetailPage({ params }: { params: Promis
 
   const r = deriveReservation(reservation);
   const services: string[] = r.services ? JSON.parse(r.services) : [];
+  const fmtDate = (d: Date | string, opts?: Intl.DateTimeFormatOptions) => formatDate(d, opts, user.language);
+  const fmtCurrency = (n: number) => formatCurrency(n, undefined, user.language);
 
   return (
     <>
@@ -82,15 +84,15 @@ export default async function ReservationDetailPage({ params }: { params: Promis
                 {r.type === "STAY" ? (
                   <>
                     <Info label={dict.reservations.room} value={r.room?.name || "—"} />
-                    <Info label={dict.reservations.checkIn} value={formatDate(r.checkIn!)} />
-                    <Info label={dict.reservations.checkOut} value={formatDate(r.checkOut!)} />
+                    <Info label={dict.reservations.checkIn} value={fmtDate(r.checkIn!)} />
+                    <Info label={dict.reservations.checkOut} value={fmtDate(r.checkOut!)} />
                   </>
                 ) : (
                   <>
                     <Info label={dict.reservations.eventType} value={eventTypeLabel(dict, r.eventType!)} />
                     <Info label={dict.reservations.eventName} value={r.eventName || "—"} />
                     <Info label={dict.reservations.eventSpace} value={r.eventSpace?.name || "—"} />
-                    <Info label={dict.reservations.date} value={formatDate(r.eventDate!)} />
+                    <Info label={dict.reservations.date} value={fmtDate(r.eventDate!)} />
                     <Info label={dict.common.time} value={`${r.eventStart} – ${r.eventEnd}`} />
                     <Info label={dict.common.guests} value={String(r.guestCount ?? "—")} />
                     {services.length > 0 && (
@@ -119,8 +121,8 @@ export default async function ReservationDetailPage({ params }: { params: Promis
                     <TBody>
                       {r.payments.map((p) => (
                         <TR key={p.id}>
-                          <TD>{formatDate(p.createdAt, { hour: "2-digit", minute: "2-digit" })}</TD>
-                          <TD className="font-medium text-success">{formatCurrency(p.amount)}</TD>
+                          <TD>{fmtDate(p.createdAt, { hour: "2-digit", minute: "2-digit" })}</TD>
+                          <TD className="font-medium text-success">{fmtCurrency(p.amount)}</TD>
                           <TD>{paymentMethodLabel(dict, p.method)}</TD>
                           <TD className="max-w-xs truncate text-text-secondary">{p.note || "—"}</TD>
                         </TR>
@@ -143,13 +145,13 @@ export default async function ReservationDetailPage({ params }: { params: Promis
             <Card>
               <CardHeader><CardTitle>{dict.reservations.pricing}</CardTitle></CardHeader>
               <CardContent className="space-y-1.5 text-sm">
-                <Row label={dict.reservations.basePrice} value={formatCurrency(r.basePrice)} />
-                <Row label={dict.reservations.extraCharges} value={`+ ${formatCurrency(r.extraCharges)}`} />
-                <Row label={dict.reservations.discount} value={`- ${formatCurrency(r.discount)}`} />
+                <Row label={dict.reservations.basePrice} value={fmtCurrency(r.basePrice)} />
+                <Row label={dict.reservations.extraCharges} value={`+ ${fmtCurrency(r.extraCharges)}`} />
+                <Row label={dict.reservations.discount} value={`- ${fmtCurrency(r.discount)}`} />
                 <div className="my-2 border-t border-border" />
-                <Row label={dict.reservations.totalAmount} value={formatCurrency(r.totalAmount)} strong />
-                <Row label={dict.reservations.amountPaid} value={formatCurrency(r.amountPaid)} tone="success" />
-                <Row label={dict.reservations.remaining} value={formatCurrency(r.remainingAmount)} tone={r.remainingAmount > 0 ? "error" : undefined} strong />
+                <Row label={dict.reservations.totalAmount} value={fmtCurrency(r.totalAmount)} strong />
+                <Row label={dict.reservations.amountPaid} value={fmtCurrency(r.amountPaid)} tone="success" />
+                <Row label={dict.reservations.remaining} value={fmtCurrency(r.remainingAmount)} tone={r.remainingAmount > 0 ? "error" : undefined} strong />
               </CardContent>
             </Card>
 
@@ -158,8 +160,8 @@ export default async function ReservationDetailPage({ params }: { params: Promis
               <CardContent className="space-y-2 text-sm">
                 <Row label={dict.reservations.reservationId} value={r.code} mono />
                 <Row label={dict.reservations.createdByLabel} value={r.createdBy?.name || dict.reservations.system} />
-                <Row label={dict.reservations.created} value={formatDate(r.createdAt, { hour: "2-digit", minute: "2-digit" })} />
-                <Row label={dict.reservations.lastUpdated} value={formatDate(r.updatedAt, { hour: "2-digit", minute: "2-digit" })} />
+                <Row label={dict.reservations.created} value={fmtDate(r.createdAt, { hour: "2-digit", minute: "2-digit" })} />
+                <Row label={dict.reservations.lastUpdated} value={fmtDate(r.updatedAt, { hour: "2-digit", minute: "2-digit" })} />
               </CardContent>
             </Card>
           </div>

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
+import { Prisma, type RoomStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateReservationCode, isRoomAvailable, isEventSpaceAvailable } from "@/lib/reservations";
 import { authorize } from "@/lib/auth/guards";
@@ -243,24 +243,51 @@ export async function addPayment(
   if (!auth.ok) return auth;
   const dict = getDictionary(auth.user.language);
   if (amount <= 0) return { ok: false as const, error: dict.reservations.amountMustBePositive };
-  try {
-    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
-    if (!reservation) return { ok: false as const, error: dict.reservations.reservationNotFound };
 
-    await prisma.payment.create({
-      data: { reservationId, amount, method, note: note || undefined, recordedById: auth.user.id },
+  const rounded = Math.round(amount * 1000) / 1000;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const reservation = await tx.reservation.findUnique({
+        where: { id: reservationId },
+        include: { payments: { select: { amount: true } } },
+      });
+      if (!reservation) throw new Error("NOT_FOUND");
+      if (reservation.status === "CANCELLED") throw new Error("CANCELLED");
+
+      const alreadyPaid = reservation.payments.reduce((s, p) => s + p.amount, 0);
+      const remaining = reservation.totalAmount - alreadyPaid;
+      if (rounded > remaining + 0.01) throw new Error("OVERPAYMENT");
+
+      await tx.payment.create({
+        data: { reservationId, amount: rounded, method, note: note || undefined, recordedById: auth.user.id },
+      });
     });
-    await logAudit(auth.user.id, "PAYMENT_ADDED", { targetType: "Reservation", targetId: reservationId, metadata: { amount, method } });
+
+    await logAudit(auth.user.id, "PAYMENT_ADDED", { targetType: "Reservation", targetId: reservationId, metadata: { amount: rounded, method } });
     revalidatePath(`/reservations/${reservationId}`);
     revalidatePath("/reservations");
     revalidatePath("/dashboard");
     revalidatePath("/finance");
     return { ok: true as const };
   } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "NOT_FOUND") return { ok: false as const, error: dict.reservations.reservationNotFound };
+    if (msg === "CANCELLED") return { ok: false as const, error: dict.reservations.cannotPayCancelled ?? "Cannot add payment to a cancelled reservation." };
+    if (msg === "OVERPAYMENT") return { ok: false as const, error: dict.reservations.paymentExceedsRemaining ?? "Payment amount exceeds the remaining balance." };
     console.error("addPayment failed:", err);
     return { ok: false as const, error: dict.reservations.addPaymentFailed };
   }
 }
+
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["CHECKED_IN", "CANCELLED", "NO_SHOW"],
+  CHECKED_IN: ["CHECKED_OUT"],
+  CHECKED_OUT: [],
+  CANCELLED: [],
+  NO_SHOW: [],
+};
 
 export async function updateReservationStatus(
   reservationId: string,
@@ -270,21 +297,29 @@ export async function updateReservationStatus(
   if (!auth.ok) return auth;
   const dict = getDictionary(auth.user.language);
   try {
-    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
-    if (!reservation) return { ok: false as const, error: dict.reservations.reservationNotFound };
+    await prisma.$transaction(async (tx) => {
+      const reservation = await tx.reservation.findUnique({ where: { id: reservationId } });
+      if (!reservation) throw new Error("NOT_FOUND");
 
-    const data: Record<string, unknown> = { status };
-    if (status === "CHECKED_OUT" && reservation.type === "STAY" && reservation.roomId) {
-      await prisma.room.update({ where: { id: reservation.roomId }, data: { status: "CLEANING" } }).catch(() => {});
-    }
-    if (status === "CHECKED_IN" && reservation.type === "STAY" && reservation.roomId) {
-      await prisma.room.update({ where: { id: reservation.roomId }, data: { status: "OCCUPIED" } }).catch(() => {});
-    }
-    if (status === "CANCELLED" && reservation.type === "STAY" && reservation.roomId) {
-      await prisma.room.update({ where: { id: reservation.roomId }, data: { status: "AVAILABLE" } }).catch(() => {});
-    }
+      const allowed = VALID_TRANSITIONS[reservation.status] ?? [];
+      if (!allowed.includes(status)) throw new Error("INVALID_TRANSITION");
 
-    await prisma.reservation.update({ where: { id: reservationId }, data });
+      if (reservation.type === "STAY" && reservation.roomId) {
+        const roomStatusMap: Partial<Record<string, RoomStatus>> = {
+          CHECKED_IN: "OCCUPIED",
+          CHECKED_OUT: "CLEANING",
+          CANCELLED: "AVAILABLE",
+          NO_SHOW: "AVAILABLE",
+        };
+        const newRoomStatus = roomStatusMap[status];
+        if (newRoomStatus) {
+          await tx.room.update({ where: { id: reservation.roomId }, data: { status: newRoomStatus } });
+        }
+      }
+
+      await tx.reservation.update({ where: { id: reservationId }, data: { status } });
+    });
+
     await logAudit(auth.user.id, "RESERVATION_STATUS_CHANGED", { targetType: "Reservation", targetId: reservationId, metadata: { status } });
     revalidatePath(`/reservations/${reservationId}`);
     revalidatePath("/reservations");
@@ -292,6 +327,9 @@ export async function updateReservationStatus(
     revalidatePath("/rooms");
     return { ok: true as const };
   } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "NOT_FOUND") return { ok: false as const, error: dict.reservations.reservationNotFound };
+    if (msg === "INVALID_TRANSITION") return { ok: false as const, error: dict.reservations.invalidStatusTransition ?? "This status change is not allowed." };
     console.error("updateReservationStatus failed:", err);
     return { ok: false as const, error: dict.reservations.updateStatusFailed };
   }
