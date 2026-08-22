@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -44,16 +44,18 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navItems = useNavItems(session.role);
 
   return (
-    <div className="flex min-h-0 h-full flex-col bg-white">
-      <div className="flex shrink-0 items-center gap-2.5 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-sm">DH</div>
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2.5 px-6 py-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-sm">
+          DH
+        </div>
         <div>
           <p className="font-display text-base leading-tight text-text-primary">Dar Henani</p>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("nav.tagline")}</p>
         </div>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto bg-white px-3">
+      <nav className="flex-1 space-y-1 px-3">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
@@ -64,7 +66,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm font-medium transition-colors",
-                active ? "bg-primary/10 text-primary" : "text-text-secondary hover:bg-muted hover:text-text-primary"
+                active
+                  ? "bg-primary/10 text-primary"
+                  : "text-text-secondary hover:bg-muted hover:text-text-primary"
               )}
             >
               <Icon className="h-4.5 w-4.5" />
@@ -74,8 +78,12 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-border bg-white px-4 py-4">
-        <Link href="/profile" onClick={onNavigate} className="mb-2 flex items-center gap-2.5 rounded-[var(--radius-sm)] px-2 py-2 hover:bg-muted">
+      <div className="border-t border-border px-4 py-4">
+        <Link
+          href="/profile"
+          onClick={onNavigate}
+          className="mb-2 flex items-center gap-2.5 rounded-[var(--radius-sm)] px-2 py-2 hover:bg-muted"
+        >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
             {session.name.slice(0, 2).toUpperCase()}
           </div>
@@ -87,7 +95,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </Link>
         <form action={logout}>
-          <button type="submit" className="flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-muted hover:text-text-primary">
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-muted hover:text-text-primary"
+          >
             <LogOut className="h-4 w-4" /> {t("common.signOut")}
           </button>
         </form>
@@ -106,56 +117,83 @@ export function Sidebar() {
 
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    const prevTouchAction = document.body.style.touchAction;
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
     return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.touchAction = prevTouchAction;
+      document.body.style.overflow = prev;
     };
   }, [open]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open || !mounted) return null;
 
-  const drawer = (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] lg:hidden"
-      style={{ width: "100vw", height: "100dvh" }}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 10000,
+      }}
+      className="lg:hidden"
     >
-      <button
-        type="button"
-        aria-label={t("common.closeMenu")}
-        className="absolute inset-0 h-full w-full bg-black/45"
+      {/* Backdrop */}
+      <div
         onClick={onClose}
-      />
-
-      <aside
-        className="absolute inset-y-0 left-0 z-[10000] flex h-full w-[85vw] max-w-[18rem] flex-col overflow-hidden bg-white shadow-2xl"
+        aria-hidden
         style={{
-          width: "min(85vw, 18rem)",
-          height: "100dvh",
-          background: "#fff",
-          opacity: 1,
-          transform: "translateZ(0)",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 10000,
         }}
-        aria-label="Mobile navigation"
+      />
+      {/* Drawer panel */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "min(85vw, 320px)",
+          height: "100dvh",
+          backgroundColor: "#ffffff",
+          zIndex: 10001,
+          boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         <button
-          type="button"
           onClick={onClose}
           aria-label={t("common.closeMenu")}
-          className="absolute right-3 top-6 z-20 rounded-full bg-white p-1.5 text-muted-foreground hover:bg-muted"
+          style={{
+            position: "absolute",
+            right: 12,
+            top: 24,
+            zIndex: 10,
+            borderRadius: "9999px",
+            padding: 6,
+          }}
+          className="text-muted-foreground hover:bg-muted"
         >
           <X className="h-4 w-4" />
         </button>
         <SidebarContent onNavigate={onClose} />
-      </aside>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
-
-  return createPortal(drawer, document.body);
 }

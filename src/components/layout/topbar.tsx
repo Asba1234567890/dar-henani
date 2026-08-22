@@ -13,7 +13,7 @@ export function Topbar({ title, actions }: { title: string; actions?: React.Reac
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-4 sm:px-6">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-background/85 px-4 py-4 backdrop-blur sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
@@ -31,9 +31,6 @@ export function Topbar({ title, actions }: { title: string; actions?: React.Reac
           <NotificationBell />
         </div>
       </header>
-
-      {/* Render the mobile drawer outside the sticky header so CSS backdrop-filter/stacking
-          contexts can never constrain a fixed-position drawer to the header height. */}
       <MobileSidebar open={open} onClose={() => setOpen(false)} />
     </>
   );
