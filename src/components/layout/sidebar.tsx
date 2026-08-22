@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -116,45 +117,83 @@ export function Sidebar() {
 
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
-  // Lock background scroll while the mobile sidebar is open so content can't bleed/scroll behind it.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
-    const prevOverflow = document.body.style.overflow;
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prev;
     };
   }, [open]);
 
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[100] lg:hidden">
+  if (!open || !mounted) return null;
+
+  return createPortal(
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 10000,
+      }}
+      className="lg:hidden"
+    >
+      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
         onClick={onClose}
         aria-hidden
-      />
-      <div
-        className="absolute left-0 top-0 flex h-full w-[85vw] max-w-72 flex-col animate-in slide-in-from-left duration-200"
         style={{
-          zIndex: 10,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 10000,
+        }}
+      />
+      {/* Drawer panel */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "min(85vw, 320px)",
+          height: "100dvh",
           backgroundColor: "#ffffff",
-          WebkitTransform: "translateZ(0)",
-          transform: "translateZ(0)",
-          WebkitBackfaceVisibility: "hidden" as const,
-          backfaceVisibility: "hidden",
+          zIndex: 10001,
           boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         <button
           onClick={onClose}
           aria-label={t("common.closeMenu")}
-          className="absolute right-3 top-6 z-10 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+          style={{
+            position: "absolute",
+            right: 12,
+            top: 24,
+            zIndex: 10,
+            borderRadius: "9999px",
+            padding: 6,
+          }}
+          className="text-muted-foreground hover:bg-muted"
         >
           <X className="h-4 w-4" />
         </button>
         <SidebarContent onNavigate={onClose} />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
