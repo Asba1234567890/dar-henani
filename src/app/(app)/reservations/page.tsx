@@ -19,6 +19,7 @@ export default async function ReservationsPage() {
     <>
       <Topbar
         title={dict.reservations.title}
+        isAdmin={user.role === "ADMIN"}
         actions={
           <Button asChild className="hidden sm:inline-flex">
             <Link href="/reservations?create=1">{dict.dashboard.createReservation}</Link>

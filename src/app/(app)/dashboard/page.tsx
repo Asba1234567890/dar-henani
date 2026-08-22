@@ -38,6 +38,7 @@ export default async function DashboardPage() {
     <>
       <Topbar
         title={dict.dashboard.title}
+        isAdmin={user.role === "ADMIN"}
         actions={
           <Button asChild>
             <Link href="/reservations?create=1">{dict.dashboard.createReservation}</Link>

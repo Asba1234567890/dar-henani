@@ -34,7 +34,7 @@ export default async function FinancePage() {
 
   return (
     <>
-      <Topbar title={dict.finance.title} actions={<FinanceActions dueReservations={data.dueReservations} />} />
+      <Topbar title={dict.finance.title} actions={<FinanceActions dueReservations={data.dueReservations} />} isAdmin />
       <PageContainer className="space-y-8">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label={dict.finance.revenueToday} value={fmtCurrency(kpis.revenueToday)} icon={Banknote} tone="success" />

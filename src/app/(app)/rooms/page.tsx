@@ -15,7 +15,7 @@ export default async function RoomsPage() {
 
   return (
     <>
-      <Topbar title={dict.rooms.title} />
+      <Topbar title={dict.rooms.title} isAdmin={user.role === "ADMIN"} />
       <PageContainer>
         <RoomsClient rooms={rooms} roomTypes={roomTypes} amenities={amenities} canManage={user.role === "ADMIN"} />
       </PageContainer>

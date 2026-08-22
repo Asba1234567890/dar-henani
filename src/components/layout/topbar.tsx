@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useI18n } from "@/lib/i18n/provider";
 
-export function Topbar({ title, actions }: { title: string; actions?: React.ReactNode }) {
+export function Topbar({ title, actions, isAdmin }: { title: string; actions?: React.ReactNode; isAdmin?: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
@@ -28,7 +28,7 @@ export function Topbar({ title, actions }: { title: string; actions?: React.Reac
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {actions}
-          <NotificationBell />
+          <NotificationBell isAdmin={isAdmin} />
         </div>
       </header>
       <MobileSidebar open={open} onClose={() => setOpen(false)} />

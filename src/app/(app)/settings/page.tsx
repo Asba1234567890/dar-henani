@@ -29,7 +29,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Topbar title={dict.settings.title} />
+      <Topbar title={dict.settings.title} isAdmin />
       <PageContainer>
         <Tabs defaultValue="property">
           <TabsList className="mb-6 flex-wrap">

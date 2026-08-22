@@ -34,7 +34,7 @@ export default async function AnalyticsPage({
 
   return (
     <>
-      <Topbar title={dict.analytics.title} />
+      <Topbar title={dict.analytics.title} isAdmin />
       <PageContainer className="space-y-8">
         <Suspense>
           <RangeFilter current={range} from={sp.from} to={sp.to} />

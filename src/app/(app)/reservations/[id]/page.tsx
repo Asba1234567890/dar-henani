@@ -51,6 +51,7 @@ export default async function ReservationDetailPage({ params }: { params: Promis
     <>
       <Topbar
         title={r.code}
+        isAdmin={user.role === "ADMIN"}
         actions={<ReservationActions reservationId={r.id} status={r.status} remainingAmount={r.remainingAmount} />}
       />
       <PageContainer className="space-y-6">

@@ -12,7 +12,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Topbar title={dict.profile.title} />
+      <Topbar title={dict.profile.title} isAdmin={user.role === "ADMIN"} />
       <PageContainer>
         <ProfileForm user={user} />
       </PageContainer>

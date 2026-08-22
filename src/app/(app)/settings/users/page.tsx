@@ -19,7 +19,7 @@ export default async function UsersPage() {
 
   return (
     <>
-      <Topbar title={dict.settings.users} />
+      <Topbar title={dict.settings.users} isAdmin />
       <PageContainer>
         <UsersManager users={users} currentUserId={currentUser.id} />
       </PageContainer>
