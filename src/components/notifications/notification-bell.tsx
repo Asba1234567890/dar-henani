@@ -92,7 +92,12 @@ export function NotificationBell() {
         toast.error(t("notifications.permissionDenied"));
         return;
       }
-      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const keyRes = await fetch("/api/push/vapid-key");
+      if (!keyRes.ok) {
+        toast.error(t("notifications.notConfigured"));
+        return;
+      }
+      const { key: publicKey } = await keyRes.json();
       if (!publicKey) {
         toast.error(t("notifications.notConfigured"));
         return;
