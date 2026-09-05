@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx --yes prisma@6.19.3 generate && next build",
+    "build": "npx --yes prisma@6.19.3 migrate deploy && npx --yes prisma@6.19.3 generate && next build",
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts"
