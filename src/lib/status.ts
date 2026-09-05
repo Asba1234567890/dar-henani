@@ -6,6 +6,7 @@ export const reservationStatusVariant: Record<ReservationStatus, "success" | "wa
   PENDING: "warning",
   CHECKED_IN: "success",
   CHECKED_OUT: "neutral",
+  COMPLETED: "success",
   CANCELLED: "error",
   NO_SHOW: "error",
 };
