@@ -49,6 +49,7 @@ enum ReservationStatus {
   PENDING
   CHECKED_IN
   CHECKED_OUT
+  COMPLETED
   CANCELLED
   NO_SHOW
 }
@@ -305,7 +306,7 @@ model Expense {
   amount       Float
   date         DateTime @default(now())
   recordedById String?
-  recordedBy   User?    @relation("ExpenseRecordedBy", fields: [recordedById], references: [id])
+  recordedBy   User?    @relation("ExpenseRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
 
   @@index([date])
