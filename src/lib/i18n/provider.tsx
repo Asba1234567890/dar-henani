@@ -5,7 +5,9 @@ import en from "@/lib/i18n/dictionaries/en";
 import fr from "@/lib/i18n/dictionaries/fr";
 import type { Language } from "@prisma/client";
 
-type Dictionary = Record<string, any>;
+type Dictionary = Record<string, unknown> & {
+  enums: Record<string, Record<string, string>>;
+};
 const DICTIONARIES: Record<Language, Dictionary> = { EN: en, FR: fr };
 
 type I18nContextValue = {
