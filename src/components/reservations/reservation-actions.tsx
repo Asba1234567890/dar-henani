@@ -10,6 +10,14 @@ import { updateReservationStatus } from "@/app/(app)/reservations/actions";
 import { useI18n } from "@/lib/i18n/provider";
 import type { ReservationStatus } from "@prisma/client";
 
+type EditableReservationStatus =
+  | "CONFIRMED"
+  | "PENDING"
+  | "CHECKED_IN"
+  | "CHECKED_OUT"
+  | "CANCELLED"
+  | "NO_SHOW";
+
 export function ReservationActions({
   reservationId,
   status,
@@ -24,7 +32,7 @@ export function ReservationActions({
   const [pending, startTransition] = useTransition();
   const [paymentOpen, setPaymentOpen] = useState(false);
 
-  function setStatus(next: ReservationStatus, confirmMsg?: string) {
+  function setStatus(next: EditableReservationStatus, confirmMsg?: string) {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
     startTransition(async () => {
       const result = await updateReservationStatus(reservationId, next);
@@ -53,7 +61,7 @@ export function ReservationActions({
           <LogOut className="h-4 w-4" /> {t("reservations.checkOutAction")}
         </Button>
       )}
-      {status !== "CANCELLED" && status !== "CHECKED_OUT" && (
+      {status !== "CANCELLED" && status !== "CHECKED_OUT" && status !== "COMPLETED" && (
         <Button
           variant="destructive"
           onClick={() => setStatus("CANCELLED", t("reservations.cancelConfirmDesc"))}
