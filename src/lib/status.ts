@@ -1,5 +1,7 @@
 import type { PaymentStatus, ReservationStatus, RoomStatus, BookingSource, EventType, PaymentMethod } from "@prisma/client";
-import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import type en from "@/lib/i18n/dictionaries/en";
+
+type Dictionary = typeof en;
 
 export const reservationStatusVariant: Record<ReservationStatus, "success" | "warning" | "info" | "neutral" | "error"> = {
   CONFIRMED: "info",
