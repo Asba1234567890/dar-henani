@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx --yes prisma@6.19.3 migrate deploy && npx --yes prisma@6.19.3 generate && next build",
+    "build": "npx --yes prisma@6.19.3 generate && next build",
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts"
@@ -45,7 +45,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/web-push": "^3.6.4",
+    "@types/web-push": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
