@@ -24,22 +24,34 @@ export async function GET() {
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       take: 30,
-      include: {
-        reservation: {
-          include: {
-            guest: true,
-            room: true,
-            eventSpace: true,
-            createdBy: true,
-          },
-        },
-      },
     }),
     prisma.notification.count({ where: { userId: user.id, read: false } }),
   ]);
 
+  const reservationIds = notifications
+    .map((notification) => notification.reservationId)
+    .filter((id): id is string => Boolean(id));
+
+  const reservations = reservationIds.length
+    ? await prisma.reservation.findMany({
+        where: { id: { in: reservationIds } },
+        include: {
+          guest: true,
+          room: true,
+          eventSpace: true,
+          createdBy: true,
+        },
+      })
+    : [];
+
+  const reservationById = new Map(reservations.map((reservation) => [reservation.id, reservation]));
   const locale = user.language === "FR" ? "fr-FR" : "en-GB";
-  const enrichedNotifications = notifications.map(({ reservation, ...notification }) => {
+
+  const enrichedNotifications = notifications.map((notification) => {
+    const reservation = notification.reservationId
+      ? reservationById.get(notification.reservationId)
+      : undefined;
+
     if (!reservation) return notification;
 
     const guestName = `${reservation.guest.firstName} ${reservation.guest.lastName}`.trim();
