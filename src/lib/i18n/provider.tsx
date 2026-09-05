@@ -3,9 +3,9 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import en from "@/lib/i18n/dictionaries/en";
 import fr from "@/lib/i18n/dictionaries/fr";
-import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import type { Language } from "@prisma/client";
 
+type Dictionary = typeof en;
 const DICTIONARIES: Record<Language, Dictionary> = { EN: en, FR: fr };
 
 type I18nContextValue = {
