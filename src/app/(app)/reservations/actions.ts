@@ -8,6 +8,7 @@ import { generateReservationCode, isRoomAvailable, isEventSpaceAvailable } from 
 import { authorize } from "@/lib/auth/guards";
 import { logAudit } from "@/lib/audit";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { sendPushToUser } from "@/lib/push";
 
 const guestSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -122,6 +123,57 @@ async function createReservationWithRetry(
   throw new Error("Could not generate a unique reservation code.");
 }
 
+async function notifyReservationCreated(reservationId: string, reservationCode: string, creatorName: string) {
+  try {
+    const [settings, activeUsers] = await Promise.all([
+      prisma.propertySettings.upsert({
+        where: { id: "default" },
+        create: { id: "default" },
+        update: {},
+      }),
+      prisma.user.findMany({
+        where: { active: true },
+        select: { id: true, language: true },
+      }),
+    ]);
+
+    await prisma.notification.createMany({
+      data: activeUsers.map((user) => {
+        const isFrench = user.language === "FR";
+        return {
+          userId: user.id,
+          title: isFrench ? "Nouvelle réservation" : "New reservation",
+          body: isFrench
+            ? `${reservationCode} — Créée par : ${creatorName}`
+            : `${reservationCode} — Created by: ${creatorName}`,
+          reservationId,
+        };
+      }),
+    });
+
+    if (settings.pushNotificationsEnabled) {
+      await Promise.all(
+        activeUsers.map((user) => {
+          const isFrench = user.language === "FR";
+          const title = isFrench ? "Nouvelle réservation" : "New reservation";
+          const body = isFrench
+            ? `${reservationCode} — Créée par : ${creatorName}`
+            : `${reservationCode} — Created by: ${creatorName}`;
+          return sendPushToUser(user.id, {
+            title,
+            body,
+            url: `/reservations/${reservationId}`,
+            tag: `NEW_RESERVATION-${reservationId}`,
+          });
+        })
+      );
+    }
+  } catch (err) {
+    // Notification delivery must never make an already-created reservation fail.
+    console.error(`Failed to notify users about reservation ${reservationId}:`, err);
+  }
+}
+
 export async function createReservation(raw: CreateReservationInput) {
   const auth = await authorize();
   if (!auth.ok) return auth;
@@ -179,6 +231,7 @@ export async function createReservation(raw: CreateReservationInput) {
       );
 
       await logAudit(auth.user.id, "RESERVATION_CREATED", { targetType: "Reservation", targetId: reservation.id, metadata: { code: reservation.code, type: "STAY" } });
+      await notifyReservationCreated(reservation.id, reservation.code, auth.user.name);
       revalidatePath("/reservations");
       revalidatePath("/dashboard");
       revalidatePath("/rooms");
@@ -224,6 +277,7 @@ export async function createReservation(raw: CreateReservationInput) {
     );
 
     await logAudit(auth.user.id, "RESERVATION_CREATED", { targetType: "Reservation", targetId: reservation.id, metadata: { code: reservation.code, type: "EVENT" } });
+    await notifyReservationCreated(reservation.id, reservation.code, auth.user.name);
     revalidatePath("/reservations");
     revalidatePath("/dashboard");
     return { ok: true as const, id: reservation.id, code: reservation.code };
