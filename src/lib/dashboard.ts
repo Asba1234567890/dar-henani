@@ -92,3 +92,5 @@ export async function getDashboardData() {
     recentReservations: recentReservationsRaw.map(deriveReservation),
   };
 }
+
+// Deployment verification marker: dashboard must run against the current Prisma schema.
