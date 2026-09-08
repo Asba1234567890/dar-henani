@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -117,11 +117,6 @@ export function Sidebar() {
 
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useI18n();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -132,7 +127,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
     };
   }, [open]);
 
-  if (!open || !mounted) return null;
+  if (!open) return null;
 
   return createPortal(
     <div
