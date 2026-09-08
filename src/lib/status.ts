@@ -1,6 +1,8 @@
 import type { PaymentStatus, ReservationStatus, RoomStatus, BookingSource, EventType, PaymentMethod } from "@prisma/client";
 
-type Dictionary = Record<string, any>;
+type Dictionary = {
+  enums: Record<string, Record<string, string>>;
+};
 
 export const reservationStatusVariant: Record<ReservationStatus, "success" | "warning" | "info" | "neutral" | "error"> = {
   CONFIRMED: "info",
